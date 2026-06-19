@@ -121,6 +121,10 @@ io.on('connection', (socket) => {
     // Si llega con token, resolver invitación (no requiere escribir nombre)
     let token = null;
     let nombreResuelto = null;
+    if (data.token && !invitados[data.token]) {
+      socket.emit('invitacion-error', { mensaje: 'Esta invitación no existe o fue eliminada.' });
+      return;
+    }
     if (data.token && invitados[data.token]) {
       token = data.token;
       nombreResuelto = invitados[token].nombre;

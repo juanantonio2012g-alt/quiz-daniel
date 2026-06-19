@@ -85,6 +85,9 @@
       <p class="text-white/75 text-lg mb-8">Capítulos 1 y 2 · 30 preguntas · Ranking en tiempo real</p>
 
       <form id="form-registro" class="bg-white/10 backdrop-blur-md border border-white/15 rounded-4xl p-6 md:p-8 text-left">
+        <div id="aviso-invitacion" class="hidden mb-4 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm text-white/80">
+          Entrando con invitación del anfitrión...
+        </div>
         <label class="block text-sm font-medium text-white/80 mb-2">Tu nombre</label>
         <input id="input-nombre" type="text" maxlength="24" autocomplete="off"
           placeholder="Ej. María"
@@ -261,6 +264,8 @@
     let timerId = null;
     let tiempoRestante = 20;
     let respondida = false;    // evita doble respuesta en la pregunta actual
+    const params = new URLSearchParams(window.location.search);
+    let tokenInvitacion = params.get('token');
 
     // =================================================================
     //  Banco de preguntas: se recibe del servidor en el evento 'config'
@@ -284,8 +289,39 @@
     // =================================================================
     let nombrePendiente = null; // guarda el nombre mientras llegan las preguntas
 
+    if (tokenInvitacion) {
+      $('aviso-invitacion').classList.remove('hidden');
+      $('input-nombre').disabled = true;
+      $('input-nombre').placeholder = 'Nombre asignado por el anfitrión';
+      const btn = $('form-registro').querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Validando invitación...';
+      socket.emit('join', { token: tokenInvitacion });
+    }
+
+    // El servidor rechaza tokens inexistentes/eliminados. Si ocurre,
+    // avisamos y rehabilitamos el formulario para entrar con nombre manual.
+    socket.on('invitacion-error', (data) => {
+      const aviso = $('aviso-invitacion');
+      aviso.classList.remove('hidden');
+      aviso.className = 'block mb-4 rounded-2xl border border-red-400/40 bg-red-500/20 px-4 py-3 text-sm text-red-100';
+      aviso.textContent = (data && data.mensaje)
+        || 'La invitación no existe o fue eliminada. Escribe tu nombre para entrar.';
+      // Rehabilitar el formulario
+      $('input-nombre').disabled = false;
+      $('input-nombre').value = '';
+      $('input-nombre').placeholder = 'Ej. María';
+      const btn = $('form-registro').querySelector('button[type="submit"]');
+      btn.disabled = false;
+      btn.textContent = 'Empezar quiz →';
+      // Que el submit manual funcione (anulamos el token)
+      tokenInvitacion = null;
+      $('input-nombre').focus();
+    });
+
     $('form-registro').addEventListener('submit', (e) => {
       e.preventDefault();
+      if (tokenInvitacion) return;
       const nombre = $('input-nombre').value.trim();
       const err = $('error-registro');
       if (nombre.length < 2) {
@@ -308,6 +344,11 @@
     // =================================================================
     socket.on('config', (data) => {
       TOTAL = data.total || TOTAL;
+      if (data.nombreConfirmado) {
+        $('jugador-nombre').textContent = data.nombreConfirmado;
+        $('input-nombre').value = data.nombreConfirmado;
+        nombrePendiente = data.nombreConfirmado;
+      }
       if (Array.isArray(data.preguntas) && data.preguntas.length) {
         preguntas = data.preguntas;
         TOTAL = preguntas.length;

@@ -67,12 +67,64 @@
             <p id="stat-promedio" class="font-display font-extrabold text-2xl">—</p>
             <p class="text-white/60 text-xs">Progreso global</p>
           </div>
+          <button id="btn-reiniciar"
+            class="bg-white text-navy-900 hover:bg-orange-50 border border-white rounded-2xl px-5 py-3 text-left transition shadow-sm">
+            <span class="block font-display font-extrabold text-sm">Nueva ronda</span>
+            <span class="block text-gray-500 text-xs">reinicia puntajes</span>
+          </button>
         </div>
       </div>
     </div>
   </header>
 
   <main class="max-w-6xl mx-auto px-4 md:px-6 py-8">
+
+    <!-- INVITACIONES -->
+    <section class="grid lg:grid-cols-5 gap-5 mb-8">
+      <div class="lg:col-span-2 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 bg-navy-900 text-white">
+          <h2 class="font-display font-bold">Invitar participantes</h2>
+          <p id="url-base" class="text-white/50 text-xs mt-1 truncate">Preparando enlace...</p>
+        </div>
+        <div class="p-5 space-y-4">
+          <form id="form-invitar" class="flex gap-2">
+            <input id="input-invitado" type="text" maxlength="24" autocomplete="off"
+              placeholder="Nombre del participante"
+              class="min-w-0 flex-1 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:ring-4 ring-orangeb/20 focus:border-orangeb text-sm" />
+            <button type="submit"
+              class="shrink-0 bg-orangeb hover:bg-orangeb-light text-white font-display font-bold px-4 py-2.5 rounded-xl transition">
+              Crear
+            </button>
+          </form>
+
+          <div>
+            <label for="input-lote" class="block text-xs font-semibold text-gray-500 mb-2">Crear varios</label>
+            <textarea id="input-lote" rows="4"
+              placeholder="Un nombre por línea"
+              class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:ring-4 ring-violetb/20 focus:border-violetb text-sm resize-none"></textarea>
+            <button id="btn-crear-lote"
+              class="mt-2 w-full bg-navy-900 hover:bg-navy-700 text-white font-display font-bold py-2.5 rounded-xl transition">
+              Crear invitaciones en lote
+            </button>
+          </div>
+          <p id="msg-invitaciones" class="hidden text-xs rounded-xl px-3 py-2"></p>
+        </div>
+      </div>
+
+      <div class="lg:col-span-3 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-5 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
+          <div>
+            <h2 class="font-display font-bold text-navy-900">Enlaces generados</h2>
+            <p class="text-gray-500 text-xs">Copia un enlace y compártelo por mensaje.</p>
+          </div>
+          <span id="invitados-contador" class="text-xs font-semibold text-gray-500 bg-white border border-gray-100 rounded-full px-3 py-1">0</span>
+        </div>
+        <div id="invitados-lista" class="divide-y divide-gray-100 max-h-80 overflow-auto"></div>
+        <div id="invitados-vacio" class="px-5 py-10 text-center text-sm text-gray-400">
+          Aún no hay invitaciones creadas.
+        </div>
+      </div>
+    </section>
 
     <!-- POLÍTICA DE CALIFICACIÓN -->
     <details class="bg-white rounded-4xl border border-gray-100 shadow-sm mb-8 group">
@@ -129,18 +181,109 @@
   <script>
     const socket = io();
     let TOTAL = 30;
+    let baseUrl = window.location.origin;
 
     // Conectarse como host (no compite)
-    socket.on('connect', () => socket.emit('join', { nombre: 'Anfitrión', host: true }));
+    socket.on('connect', () => {
+      socket.emit('join', { nombre: 'Anfitrión', host: true });
+      socket.emit('host:info', (info) => {
+        if (info && info.baseUrl) baseUrl = info.baseUrl;
+        if (info && info.total) TOTAL = info.total;
+        $('url-base').textContent = baseUrl;
+      });
+    });
 
     socket.on('config', (cfg) => {
       if (cfg && cfg.total) TOTAL = cfg.total;
     });
 
     socket.on('ranking-update', (ranking) => render(ranking));
+    socket.on('invitados-update', (invitados) => renderInvitados(invitados || []));
 
     const $ = (id) => document.getElementById(id);
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function linkInvitado(token){ return `${baseUrl}/?token=${encodeURIComponent(token)}`; }
+    function mostrarMensaje(texto, ok = true) {
+      const msg = $('msg-invitaciones');
+      msg.textContent = texto;
+      msg.className = `text-xs rounded-xl px-3 py-2 ${ok ? 'bg-green-50 text-green-700 border border-green-100' : 'bg-red-50 text-red-700 border border-red-100'}`;
+      msg.classList.remove('hidden');
+      setTimeout(() => msg.classList.add('hidden'), 2600);
+    }
+
+    $('form-invitar').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = $('input-invitado');
+      const nombre = input.value.trim();
+      if (nombre.length < 2) {
+        mostrarMensaje('Escribe un nombre de al menos 2 letras.', false);
+        return;
+      }
+      socket.emit('host:crear', { nombre }, (res) => {
+        if (res && res.ok) {
+          input.value = '';
+          mostrarMensaje(`Invitación creada para ${res.nombre}.`);
+        }
+      });
+    });
+
+    $('btn-crear-lote').addEventListener('click', () => {
+      const nombres = $('input-lote').value.split('\n').map(n => n.trim()).filter(Boolean);
+      if (!nombres.length) {
+        mostrarMensaje('Pega uno o más nombres, uno por línea.', false);
+        return;
+      }
+      socket.emit('host:crear-lote', { nombres }, (res) => {
+        if (res && res.ok) {
+          $('input-lote').value = '';
+          mostrarMensaje(`${res.creados.length} invitaciones creadas.`);
+        }
+      });
+    });
+
+    $('btn-reiniciar').addEventListener('click', () => {
+      const ok = window.confirm('¿Reiniciar puntajes y progreso de todos? Las invitaciones se conservan.');
+      if (ok) socket.emit('host:reiniciar-sesion');
+    });
+
+    async function copiarTexto(texto) {
+      try {
+        await navigator.clipboard.writeText(texto);
+        mostrarMensaje('Enlace copiado.');
+      } catch {
+        window.prompt('Copia este enlace:', texto);
+      }
+    }
+
+    function renderInvitados(invitados) {
+      $('invitados-contador').textContent = invitados.length + (invitados.length === 1 ? ' invitación' : ' invitaciones');
+      $('invitados-vacio').classList.toggle('hidden', invitados.length > 0);
+      const lista = $('invitados-lista');
+      lista.innerHTML = '';
+      invitados.forEach(inv => {
+        const url = linkInvitado(inv.token);
+        const fila = document.createElement('div');
+        fila.className = 'px-5 py-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center';
+        fila.innerHTML = `
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <p class="font-semibold text-navy-900 truncate">${escapeHtml(inv.nombre)}</p>
+              ${inv.conectado
+                ? '<span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">conectado</span>'
+                : '<span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-semibold">pendiente</span>'}
+            </div>
+            <p class="text-xs text-gray-400 truncate mt-1">${escapeHtml(url)}</p>
+          </div>
+          <div class="flex gap-2">
+            <button data-copy="${escapeHtml(url)}" class="btn-copy bg-orangeb hover:bg-orangeb-light text-white text-xs font-bold px-3 py-2 rounded-xl transition">Copiar</button>
+            <button data-token="${escapeHtml(inv.token)}" class="btn-delete bg-white border border-gray-200 hover:border-red-300 text-gray-600 hover:text-red-600 text-xs font-bold px-3 py-2 rounded-xl transition">Eliminar</button>
+          </div>
+        `;
+        lista.appendChild(fila);
+      });
+      lista.querySelectorAll('.btn-copy').forEach(btn => btn.addEventListener('click', () => copiarTexto(btn.dataset.copy)));
+      lista.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', () => socket.emit('host:eliminar', { token: btn.dataset.token })));
+    }
 
     function render(ranking) {
       const n = ranking.length;
