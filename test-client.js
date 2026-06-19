@@ -149,27 +149,29 @@ function crearJugador(nombre, modo) {
 
   // --- Flujo básico ---
   check('Perfecto conectó y recibió config', perfecto.conectado && perfecto.recibioConfig);
-  check('Perfecto: 30 feedbacks', perfecto.feedbacks === TOTAL);
-  check('Perfecto: 30 aciertos', perfecto.aciertosRecibidos === TOTAL);
+  check(`Perfecto: ${TOTAL} feedbacks`, perfecto.feedbacks === TOTAL);
+  check(`Perfecto: ${TOTAL} aciertos`, perfecto.aciertosRecibidos === TOTAL);
   check('Perfecto: repaso con 0 errores', perfecto.repaso && perfecto.repaso.errores === 0);
 
   check('Novato: 0 aciertos', novato.aciertosRecibidos === 0);
-  check('Novato: repaso con 30 errores', novato.repaso && novato.repaso.errores === TOTAL);
+  check(`Novato: repaso con ${TOTAL} errores`, novato.repaso && novato.repaso.errores === TOTAL);
 
-  check('Estudiante: 15 aciertos y 15 errores', estudiante.aciertosRecibidos === 15 && estudiante.repaso && estudiante.repaso.errores === 15);
+  const mitadAciertos = Math.ceil(TOTAL / 2);
+  const mitadErrores = TOTAL - mitadAciertos;
+  check(`Estudiante: ${mitadAciertos} aciertos y ${mitadErrores} errores`, estudiante.aciertosRecibidos === mitadAciertos && estudiante.repaso && estudiante.repaso.errores === mitadErrores);
 
   // --- Política de puntaje ---
-  // Perfecto: 30 * (1000 + 30) = 30900
-  check('Perfecto puntaje = 30 × (1000+30) = 30900', perfecto.puntajeSumado === 30 * (BASE + MAX_BONUS));
-  // Lento: 30 * (1000 + bonus(1)=2) = 30060
-  check('Lento puntaje = 30 × (1000+2) = 30060', lento.puntajeSumado === 30 * (BASE + bonusEsperado(1)));
+  const perfectoEsperado = TOTAL * (BASE + MAX_BONUS);
+  const lentoEsperado = TOTAL * (BASE + bonusEsperado(1));
+  check(`Perfecto puntaje = ${TOTAL} × (1000+30) = ${perfectoEsperado}`, perfecto.puntajeSumado === perfectoEsperado);
+  check(`Lento puntaje = ${TOTAL} × (1000+2) = ${lentoEsperado}`, lento.puntajeSumado === lentoEsperado);
   // Novato: 0
   check('Novato puntaje = 0', novato.puntajeSumado === 0);
 
   // --- Garantía de no inversión de precisión ---
-  // Lento (30 aciertos) SIEMPRE supera a Estudiante (15 aciertos), sin importar velocidad.
-  check('Garantía: 30 aciertos (lento) > 15 aciertos (estudiante)', lento.puntajeSumado > estudiante.puntajeSumado);
-  check('Garantía: 15 aciertos > 0 aciertos', estudiante.puntajeSumado > novato.puntajeSumado);
+  // Lento (todas correctas) SIEMPRE supera a Estudiante (mitad correctas), sin importar velocidad.
+  check(`Garantía: ${TOTAL} aciertos (lento) > ${mitadAciertos} aciertos (estudiante)`, lento.puntajeSumado > estudiante.puntajeSumado);
+  check(`Garantía: ${mitadAciertos} aciertos > 0 aciertos`, estudiante.puntajeSumado > novato.puntajeSumado);
 
   // --- Sin errores de formato/seguridad/puntaje ---
   const errores = resultados.flatMap(r => r.errores);

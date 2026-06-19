@@ -25,9 +25,20 @@
     };
   </script>
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .gradient-brand { background: linear-gradient(135deg, #0A1F44 0%, #7C3AED 100%); }
-    .gradient-text { background: linear-gradient(90deg, #F97316, #A78BFA, #F97316); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+    :root { --navy:#071A3F; --navy-deep:#061635; --gold:#F6C453; --gold-soft:#FFE08A; --paper:#F7F1E4; }
+    * { -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background:
+        radial-gradient(circle at 85% 8%, rgba(246,196,83,.22), transparent 18rem),
+        linear-gradient(180deg, #061635 0%, #0b3274 42%, #f7f1e4 42%, #f7f1e4 100%);
+    }
+    .gradient-brand {
+      background:
+        linear-gradient(180deg, rgba(6,22,53,.34), rgba(6,22,53,.92)),
+        url('/assets/faro-amor-quiz-daniel.jpg') center top / cover no-repeat;
+    }
+    .gradient-text { background: linear-gradient(90deg, #FFE08A, #F6C453, #FFFFFF, #F6C453); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
     .grid-bg { background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 60px 60px; }
     .blob { position:absolute; border-radius:50%; filter:blur(80px); opacity:0.45; z-index:0; }
     .pulse-dot { animation: pulse-dot 1.6s ease-in-out infinite; }
@@ -35,6 +46,21 @@
     .barra-fill { transition: width 0.6s cubic-bezier(.4,0,.2,1); }
     .flip { animation: flip 0.4s ease-out; }
     @keyframes flip { 0%{transform:translateY(-6px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+    .host-shell { width:min(100%, 430px); margin:0 auto; }
+    .host-card {
+      border-radius: 24px;
+      background: rgba(255,255,255,.96);
+      border: 1px solid rgba(255,255,255,.75);
+      box-shadow: 0 20px 48px rgba(6,22,53,.16);
+      overflow:hidden;
+    }
+    .gold-button {
+      background: linear-gradient(135deg, #FFE08A, #F6C453 45%, #D99A21);
+      color: var(--navy-deep);
+      box-shadow: 0 14px 30px rgba(246,196,83,.26), inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .gold-button:active, .tap-button:active { transform: scale(.985); }
+    @media (min-width: 1024px) { .host-shell { width:min(100%, 1152px); } }
     @media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
   </style>
 </head>
@@ -45,30 +71,30 @@
     <div class="grid-bg absolute inset-0"></div>
     <div class="blob bg-violetb w-96 h-96 -top-20 -right-20"></div>
     <div class="blob bg-orangeb w-96 h-96 -bottom-32 -left-20 opacity-30"></div>
-    <div class="relative z-10 max-w-6xl mx-auto px-6 py-8">
+    <div class="relative z-10 host-shell px-4 py-6">
       <div class="flex items-center justify-between flex-wrap gap-4">
         <div>
           <span class="inline-flex items-center gap-2 bg-white/10 border border-white/15 px-3 py-1 rounded-full text-xs font-medium mb-2">
             <span class="w-2 h-2 rounded-full bg-green-400 pulse-dot"></span> EN VIVO · Actualización automática
           </span>
-          <h1 class="font-display font-extrabold text-3xl md:text-4xl">👑 Panel del Anfitrión</h1>
-          <p class="text-white/70 text-sm mt-1">Quiz Daniel · Capítulos 1 y 2 · 30 preguntas</p>
+          <h1 class="font-display font-extrabold text-3xl md:text-4xl">Panel del Anfitrión</h1>
+          <p class="text-white/70 text-sm mt-1">Quiz Daniel · Capítulos 1–12 · <span id="total-header">—</span> preguntas</p>
         </div>
-        <div class="flex gap-3 text-center">
-          <div class="bg-white/10 border border-white/15 rounded-2xl px-5 py-3">
+        <div class="grid grid-cols-2 sm:flex gap-3 text-center w-full sm:w-auto">
+          <div class="bg-white/10 border border-white/15 rounded-2xl px-4 py-3">
             <p id="stat-jugadores" class="font-display font-extrabold text-2xl">0</p>
             <p class="text-white/60 text-xs">Participantes</p>
           </div>
-          <div class="bg-white/10 border border-white/15 rounded-2xl px-5 py-3">
+          <div class="bg-white/10 border border-white/15 rounded-2xl px-4 py-3">
             <p id="stat-terminados" class="font-display font-extrabold text-2xl">0</p>
             <p class="text-white/60 text-xs">Terminaron</p>
           </div>
-          <div class="bg-white/10 border border-white/15 rounded-2xl px-5 py-3">
+          <div class="bg-white/10 border border-white/15 rounded-2xl px-4 py-3">
             <p id="stat-promedio" class="font-display font-extrabold text-2xl">—</p>
             <p class="text-white/60 text-xs">Progreso global</p>
           </div>
           <button id="btn-reiniciar"
-            class="bg-white text-navy-900 hover:bg-orange-50 border border-white rounded-2xl px-5 py-3 text-left transition shadow-sm">
+            class="tap-button bg-white text-navy-900 hover:bg-orange-50 border border-white rounded-2xl px-4 py-3 text-left transition shadow-sm">
             <span class="block font-display font-extrabold text-sm">Nueva ronda</span>
             <span class="block text-gray-500 text-xs">reinicia puntajes</span>
           </button>
@@ -77,11 +103,11 @@
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 md:px-6 py-8">
+  <main class="host-shell px-4 py-5">
 
     <!-- SALA COMPARTIDA -->
     <section class="grid lg:grid-cols-5 gap-5 mb-8">
-      <div class="lg:col-span-2 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="lg:col-span-2 host-card">
         <div class="px-5 py-4 bg-navy-900 text-white">
           <h2 class="font-display font-bold">Enlace único</h2>
           <p id="url-base" class="text-white/50 text-xs mt-1 truncate">Preparando sala...</p>
@@ -92,11 +118,11 @@
             <p id="link-sala" class="text-sm font-semibold text-navy-900 break-all">Preparando enlace...</p>
           </div>
           <button id="btn-copiar-sala"
-            class="w-full bg-orangeb hover:bg-orangeb-light text-white font-display font-bold py-3 rounded-xl transition">
+            class="gold-button w-full font-display font-extrabold py-4 rounded-2xl transition">
             Copiar link
           </button>
           <button id="btn-iniciar-juego"
-            class="w-full bg-navy-900 hover:bg-navy-700 text-white font-display font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+            class="tap-button w-full bg-navy-900 hover:bg-navy-700 text-white font-display font-extrabold py-4 rounded-2xl transition disabled:opacity-50 disabled:cursor-not-allowed">
             Iniciar juego
           </button>
           <div id="estado-juego" class="rounded-2xl border border-gray-100 bg-white px-4 py-3">
@@ -107,7 +133,7 @@
         </div>
       </div>
 
-      <div class="lg:col-span-3 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="lg:col-span-3 host-card">
         <div class="px-5 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
           <div>
             <h2 class="font-display font-bold text-navy-900">Participantes en sala</h2>
@@ -130,7 +156,7 @@
     </div>
 
     <!-- POLÍTICA DE CALIFICACIÓN -->
-    <details class="bg-white rounded-4xl border border-gray-100 shadow-sm mb-8 group">
+    <details class="host-card mb-8 group">
       <summary class="cursor-pointer px-6 py-4 flex items-center justify-between font-display font-bold text-navy-900">
         <span>📐 Política de calificación</span>
         <span class="text-gray-400 group-open:rotate-180 transition">▾</span>
@@ -154,7 +180,7 @@
     </section>
 
     <!-- TABLA DE PROGRESO POR PARTICIPANTE -->
-    <section class="bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
+    <section class="host-card">
       <div class="px-5 py-4 bg-navy-900 text-white flex items-center justify-between">
         <h2 class="font-display font-bold">📊 Progreso de cada participante</h2>
         <span id="actualizado" class="text-white/50 text-xs">Esperando…</span>
@@ -197,6 +223,7 @@
         if (info && info.total) TOTAL = info.total;
         $('url-base').textContent = baseUrl;
         $('link-sala').textContent = linkSala;
+        $('total-header').textContent = TOTAL;
         if (info && info.juego) renderEstadoJuego(info.juego);
       });
     });
@@ -211,6 +238,7 @@
 
     socket.on('config', (cfg) => {
       if (cfg && cfg.total) TOTAL = cfg.total;
+      $('total-header').textContent = TOTAL;
       if (cfg && cfg.juego) renderEstadoJuego(cfg.juego);
     });
 
@@ -343,25 +371,28 @@
       ranking.forEach((j, i) => {
         const pct = TOTAL ? Math.round(j.respondidas / TOTAL * 100) : 0;
         const fila = document.createElement('div');
-        fila.className = 'px-5 py-4 grid grid-cols-12 gap-3 items-center flip';
+        fila.className = 'px-5 py-4 flip';
         fila.innerHTML = `
-          <div class="col-span-2 md:col-span-1 font-display font-bold ${i<3?'text-orangeb':'text-gray-400'}">${i+1}</div>
-          <div class="col-span-4 md:col-span-3 font-semibold text-navy-900 truncate">${escapeHtml(j.nombre)}</div>
-          <div class="col-span-4 md:col-span-3">
-            <div class="flex items-center gap-2">
-              <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <div class="barra-fill h-full rounded-full ${j.terminado?'bg-green-500':'bg-gradient-to-r from-orangeb to-violetb'}" style="width:${pct}%"></div>
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="font-display font-extrabold ${i<3?'text-orangeb':'text-gray-400'}">${i+1}</span>
+                <p class="font-semibold text-navy-900 truncate">${escapeHtml(j.nombre)}</p>
               </div>
-              <span class="text-xs text-gray-500 w-14 text-right">${j.respondidas}/${TOTAL}</span>
+              <p class="text-xs text-gray-400 mt-1">${j.aciertos} aciertos · ${j.errores} errores</p>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="font-display font-extrabold text-navy-900">${(j.puntaje||0).toLocaleString()}</p>
+              ${j.terminado
+                ? '<span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">fin</span>'
+                : '<span class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-semibold pulse-dot">jugando</span>'}
             </div>
           </div>
-          <div class="col-span-2 md:col-span-1 text-center font-semibold text-green-600">${j.aciertos}</div>
-          <div class="col-span-2 md:col-span-1 text-center font-semibold text-red-500">${j.errores}</div>
-          <div class="col-span-3 md:col-span-2 text-right font-display font-bold text-navy-900 text-sm md:text-base">${(j.puntaje||0).toLocaleString()}</div>
-          <div class="col-span-3 md:col-span-1 text-right">
-            ${j.terminado
-              ? '<span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">✓ fin</span>'
-              : '<span class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-semibold pulse-dot">jugando</span>'}
+          <div class="mt-3 flex items-center gap-2">
+            <div class="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div class="barra-fill h-full rounded-full ${j.terminado?'bg-green-500':'bg-gradient-to-r from-orangeb to-violetb'}" style="width:${pct}%"></div>
+            </div>
+            <span class="text-xs text-gray-500 w-14 text-right">${j.respondidas}/${TOTAL}</span>
           </div>
         `;
         tabla.appendChild(fila);

@@ -1,12 +1,12 @@
-# 📖 Quiz Daniel — Capítulos 1 y 2
+# 📖 Quiz Daniel — Capítulos 1–12
 
-Quiz interactivo **multi-usuario en tiempo real** sobre el libro de Daniel, capítulos 1 y 2.
+Quiz interactivo **multi-usuario en tiempo real** sobre el libro de Daniel, capítulos 1–12.
 Cada participante entra desde su propio celular y las calificaciones se sincronizan en vivo
 en un ranking compartido. El anfitrión ve el progreso de todos desde un panel dedicado.
 
 ## ✨ Características
 
-- **30 preguntas** basadas en el texto bíblico (15 de Daniel 1 + 15 de Daniel 2).
+- Banco de preguntas basado en Daniel 1–12.
 - **👑 Panel del anfitrión** (`/host.html`): progreso, aciertos, errores y puntaje de cada
   participante actualizados en tiempo real, más podio en vivo. Ideal para proyectar.
 - **Política de calificación "Daniel"** que combina precisión + velocidad (ver más abajo).
@@ -31,7 +31,7 @@ npm start
 ```
 Verás en la terminal:
 ```
-📖 Quiz Daniel — Capítulos 1 y 2
+📖 Quiz Daniel — Capítulos 1–12
 ✅ Servidor activo
 🌐 En esta computadora:  http://localhost:3000
 📱 En celulares/tablets: http://192.168.x.x:3000
@@ -41,8 +41,8 @@ Verás en la terminal:
 ### 3. Roles
 - **Anfitrión (tú):** abre `http://localhost:3000/host.html` en tu computadora y déjala abierta
   (o proyéctala). Ahí verás aparecer a los participantes y su avance en vivo.
-- **Participantes:** desde su celular, entran a la dirección IP que muestra la terminal
-  (misma red Wi-Fi), escriben su nombre y comienzan.
+- **Participantes:** desde su celular, entran al enlace único que muestra el anfitrión,
+  escriben su nombre y esperan la cuenta regresiva.
 
 > 💡 Si la IP no funciona en los celulares, revisa que tu firewall permita conexiones
 > entrantes en el puerto 3000 y que todos estén en la misma red.
@@ -71,14 +71,9 @@ con 18 se puede subir al podio. La política se autoadapta al nivel real del gru
 
 ## 🧠 Temas cubiertos
 
-**Daniel 1** — La deportación a Babilonia, Nabucodonosor, Aspenaz, los jóvenes de Judá,
-el cambio de nombres (Daniel→Beltsasar, Ananías→Sadrac, Misael→Mesac, Azarías→Abed-nego),
-la comida del rey, el propósito de Daniel, la prueba de 10 días, los dones de Dios y la
-permanencia de Daniel hasta Ciro.
-
-**Daniel 2** — El sueño de Nabucodonosor, la incapacidad de los sabios, el decreto de muerte,
-Arioc, Daniel pide tiempo, la visión de la estatua (oro, plata, bronce, hierro, hierro y barro),
-la piedra cortada sin manos, el monte que llenó la tierra y el reino eterno de Dios.
+Daniel 1–12: la fidelidad de Daniel y sus amigos, la estatua del sueño de Nabucodonosor,
+el horno de fuego, la humillación de Nabucodonosor, la escritura en la pared, el foso de
+los leones y las principales visiones proféticas del libro.
 
 ## 🛠 Tecnología
 
@@ -92,7 +87,7 @@ la piedra cortada sin manos, el monte que llenó la tierra y el reino eterno de 
 ```
 quiz-daniel/
 ├── package.json
-├── preguntas.js        # Banco de 30 preguntas (fuente única de verdad)
+├── preguntas.js        # Banco de preguntas (fuente única de verdad)
 ├── server.js           # Servidor + política de puntaje + lógica en tiempo real
 ├── test-client.js      # Pruebas automáticas del flujo
 ├── public/

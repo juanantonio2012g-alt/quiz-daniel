@@ -1,6 +1,6 @@
 // ===================================================================
 //  Quiz Daniel — Servidor en tiempo real (Express + Socket.IO)
-//  Quiz interactivo multi-usuario sobre el libro de Daniel caps. 1 y 2
+//  Quiz interactivo multi-usuario sobre el libro de Daniel caps. 1-12
 // ===================================================================
 
 const express = require('express');
@@ -28,7 +28,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 //  • Desempate  = mayor puntaje; si idéntico, quien respondió antes.
 //
 //  Garantía matemática (la precisión nunca se invierte):
-//    Si V < BASE/TOTAL → MAX_BONUS=30 < 1000/30 ≈ 33.3  ✓
+//    Si V < BASE/TOTAL → MAX_BONUS=30 < 1000/TOTAL  ✓
 //    Nadie con menos aciertos puede superar a quien tuvo más.
 //  La velocidad decide los empates y los puestos cercanos.
 // -------------------------------------------------------------------
@@ -365,7 +365,7 @@ server.listen(PORT, () => {
     || `http://${obtenerIPLocal()}:${PORT}`;
 
   console.log('\n────────────────────────────────────────────────');
-  console.log('  📖 Quiz Daniel — Capítulos 1 y 2');
+  console.log('  📖 Quiz Daniel — Capítulos 1–12');
   console.log('────────────────────────────────────────────────');
   console.log(`  ✅ Servidor activo  (entorno: ${esRender ? 'Render (producción)' : 'local'})`);
   console.log(`  🌐 URL pública:           ${urlPublica}`);

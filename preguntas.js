@@ -1,366 +1,295 @@
 // ===================================================================
 //  Banco de preguntas — fuente única de verdad
-//  30 preguntas en total (15 de Daniel 1 + 15 de Daniel 2)
+//  Quiz bíblico del libro de Daniel (capítulos 1-12)
 //
 //  Cada pregunta:
-//    cap         → capítulo (1 o 2)
+//    cap         → capítulo o sección
 //    pregunta    → enunciado
 //    opciones    → arreglo de 4 opciones
 //    correcta    → índice (0-3) de la opción correcta
 //    explicacion → texto que se muestra en la retroalimentación
 //    ref         → referencia bíblica
 //
-//  Este módulo lo usan:
-//    - server.js      → para validar respuestas y armar el repaso
-//    - test-client.js → para conocer las respuestas correctas al probar
-//
 //  El navegador NUNCA recibe `correcta` ni `explicacion` hasta que
 //  responde; el servidor las envía una por una en el evento `feedback`.
 // ===================================================================
 
 const PREGUNTAS = [
-  // ====================== DANIEL 1 (15) ======================
   {
     cap: 1,
-    pregunta: '¿En qué año de reinado de Nabucodonosor sitió Jerusalén?',
-    opciones: ['Primero', 'Tercero', 'Cuarto', 'Segundo'],
-    correcta: 0,
-    explicacion: 'En el año tercero del reinado de Joacim, rey de Judá, Nabucodonosor sitió Jerusalén (Daniel 1:1).',
-    ref: 'Daniel 1:1'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Quién entregó a Joacim rey de Judá en manos de Nabucodonosor?',
-    opciones: ['Faraón', 'El rey de Asiria', 'Jehová', 'Los caldeos'],
+    pregunta: '¿Qué decidió Daniel al llegar a Babilonia?',
+    opciones: ['No aprender el idioma de los caldeos', 'No servir al rey', 'No contaminarse con la comida del rey', 'No vivir en el palacio'],
     correcta: 2,
-    explicacion: 'El Señor entregó a Joacim en sus manos, mostrando la soberanía divina aun en la derrota (Daniel 1:2).',
-    ref: 'Daniel 1:2'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Qué objetos sagrados llevó Nabucodonosor al templo de su dios?',
-    opciones: [
-      'Vasos de la casa de Dios',
-      'Las tablas de la ley',
-      'El candelero solo',
-      'Las espadas de los sacerdotes'
-    ],
-    correcta: 0,
-    explicacion: 'Llevó parte de los vasos de la casa de Dios y los puso en la casa del tesoro de su dios (Daniel 1:2).',
-    ref: 'Daniel 1:2'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Cómo se llamaba el jefe de los eunucos del rey?',
-    opciones: ['Arioc', 'Aspenaz', 'Sadrac', 'Belsasar'],
-    correcta: 1,
-    explicacion: 'Aspenaz era el jefe de los eunucos; a él el rey le ordenó traer jóvenes de los hijos de Israel (Daniel 1:3).',
-    ref: 'Daniel 1:3'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Qué características debían tener los jóvenes seleccionados?',
-    opciones: [
-      'Sin defecto, de buen parecer, sabios y entendidos',
-      'Los más ancianos y respetados',
-      'Guerreros valientes',
-      'Hijos de sacerdotes únicamente'
-    ],
-    correcta: 0,
-    explicacion: 'Debían ser del linaje real, sin tacha, de buen parecer, entendidos en sabiduría, ciencia y capaces (Daniel 1:4).',
-    ref: 'Daniel 1:4'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Por cuántos años debían ser enseñados los jóvenes?',
-    opciones: ['3 años', '5 años', '7 años', '1 año'],
-    correcta: 0,
-    explicacion: 'Debían ser enseñados durante tres años para luego servir delante del rey (Daniel 1:5).',
-    ref: 'Daniel 1:5'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Qué nombre babilónico recibió Ananías?',
-    opciones: ['Sadrac', 'Mesac', 'Abed-nego', 'Beltsasar'],
-    correcta: 0,
-    explicacion: 'A Ananías le pusieron Sadrac; a Misael, Mesac; y a Azarías, Abed-nego (Daniel 1:7).',
-    ref: 'Daniel 1:7'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Qué nombre recibieron Misael y Azarías respectivamente?',
-    opciones: [
-      'Mesac y Abed-nego',
-      'Sadrac y Beltsasar',
-      'Abed-nego y Sadrac',
-      'Beltsasar y Mesac'
-    ],
-    correcta: 0,
-    explicacion: 'A Misael le pusieron Mesac, y a Azarías, Abed-nego. Cambiar los nombres significaba cambiar su identidad y su Dios (Daniel 1:7).',
-    ref: 'Daniel 1:7'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Qué se propuso Daniel en su corazón?',
-    opciones: [
-      'Volver pronto a Jerusalén',
-      'No contaminarse con la comida ni el vino del rey',
-      'Aprender la lengua de los caldeos',
-      'Hacerse amigo del rey'
-    ],
-    correcta: 1,
-    explicacion: 'Daniel se propuso en su corazón no contaminarse con la ración de la comida del rey ni con su vino (Daniel 1:8).',
+    explicacion: 'Daniel se propuso no contaminarse con la comida ni con el vino del rey.',
     ref: 'Daniel 1:8'
   },
   {
     cap: 1,
-    pregunta: '¿Cómo respondió Aspenaz cuando Daniel le pidió no contaminarse?',
-    opciones: [
-      'Le concedió todo de inmediato',
-      'Tuvo miedo del rey, que les había ordenado comer eso',
-      'Lo reportó al rey',
-      'Lo encarceló'
-    ],
+    pregunta: '¿Qué comieron Daniel y sus amigos durante diez días?',
+    opciones: ['Carne y vino', 'Verduras y agua', 'Pan y leche', 'Frutas y miel'],
     correcta: 1,
-    explicacion: 'Aspenaz temió al rey, pues él había ordenado esa comida; si los jóvenes se veían mal, peligraba su propia vida (Daniel 1:10).',
-    ref: 'Daniel 1:10'
-  },
-  {
-    cap: 1,
-    pregunta: '¿A quién pidió Daniel que los probara solo con esa dieta durante 10 días?',
-    opciones: ['Al principal de los eunucos', 'A Melsar (el que cuidaba de ellos)', 'Al rey', 'A un médico caldeo'],
-    correcta: 1,
-    explicacion: 'Daniel habló con Melsar, a quien el jefe de los eunucos había puesto sobre ellos (Daniel 1:11).',
-    ref: 'Daniel 1:11'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Qué pidieron comer Daniel y sus amigos durante la prueba?',
-    opciones: [
-      'Pan y agua',
-      'Legumbres y agua',
-      'Frutas y leche',
-      'Pescado y vino'
-    ],
-    correcta: 1,
-    explicacion: 'Pidieron que les dieran a probar legumbres para comer y agua para beber durante diez días (Daniel 1:12).',
+    explicacion: 'Pidieron una prueba de diez días comiendo legumbres y bebiendo agua.',
     ref: 'Daniel 1:12'
   },
   {
     cap: 1,
-    pregunta: '¿Cómo quedaron Daniel y sus compañeros al cabo de los 10 días?',
-    opciones: [
-      'Más gordos y sanos que todos los demás',
-      'Más flacos y pálidos',
-      'Igual que los demás',
-      'Enfermos'
-    ],
-    correcta: 0,
-    explicacion: 'Al final de los diez días parecían mejores y más gordos que los jóvenes que comían la comida del rey (Daniel 1:15).',
-    ref: 'Daniel 1:15'
+    pregunta: '¿Cuál era el nombre babilónico de Daniel?',
+    opciones: ['Sadrac', 'Mesac', 'Abed-nego', 'Beltsasar'],
+    correcta: 3,
+    explicacion: 'A Daniel le fue puesto el nombre Beltsasar.',
+    ref: 'Daniel 1:7'
   },
   {
     cap: 1,
-    pregunta: '¿Qué dones especiales recibieron los cuatro jóvenes de parte de Dios?',
-    opciones: [
-      'Riquezas y honores',
-      'Sabiduría, ciencia y entendimiento; además Daniel entendía visiones y sueños',
-      'Fuerza física para guerrear',
-      'El favor del rey únicamente'
-    ],
+    pregunta: '¿Quiénes eran los tres amigos de Daniel?',
+    opciones: ['Isaías, Jeremías y Ezequiel', 'Ananías, Misael y Azarías', 'Pedro, Juan y Santiago', 'Moisés, Aarón y Josué'],
     correcta: 1,
-    explicacion: 'Dios les dio conocimiento y sabiduría en toda ciencia; y Daniel tuvo entendimiento en toda visión y sueños (Daniel 1:17).',
-    ref: 'Daniel 1:17'
-  },
-  {
-    cap: 1,
-    pregunta: '¿Hasta cuándo continuó Daniel en el servicio del rey?',
-    opciones: [
-      'Hasta el año primero del rey Ciro',
-      'Solo durante el reinado de Nabucodonosor',
-      'Hasta la caída de Babilonia únicamente',
-      'Hasta los 40 años'
-    ],
-    correcta: 0,
-    explicacion: 'Continuó Daniel hasta el año primero del rey Ciro, es decir, todo el tiempo del exilio (Daniel 1:21).',
-    ref: 'Daniel 1:21'
-  },
-
-  // ====================== DANIEL 2 (15) ======================
-  {
-    cap: 2,
-    pregunta: '¿En qué año del reinado de Nabucodonosor tuvo sus sueños?',
-    opciones: ['Segundo', 'Primero', 'Décimo', 'Quinto'],
-    correcta: 0,
-    explicacion: 'En el segundo año del reinado de Nabucodonosor, este tuvo sueños que alteraron su espíritu (Daniel 2:1).',
-    ref: 'Daniel 2:1'
+    explicacion: 'Los compañeros de Daniel eran Ananías, Misael y Azarías.',
+    ref: 'Daniel 1:6'
   },
   {
     cap: 2,
-    pregunta: '¿A quién llamó el rey para que le explicara el sueño?',
-    opciones: [
-      'Magos, astrólogos, encantadores y caldeos',
-      'A Daniel y sus amigos únicamente',
-      'Solo a los soldados',
-      'A los sacerdotes de Jerusalén'
-    ],
-    correcta: 0,
-    explicacion: 'El rey mandó llamar a magos, astrólogos, encantadores y caldeos para que le declararan el sueño (Daniel 2:2).',
-    ref: 'Daniel 2:2'
+    pregunta: '¿Qué exigió Nabucodonosor a los sabios de Babilonia?',
+    opciones: ['Interpretar su sueño', 'Construir una estatua', 'Decirle el sueño e interpretarlo', 'Hacer sacrificios'],
+    correcta: 2,
+    explicacion: 'El rey exigió que los sabios dijeran el sueño y también su interpretación.',
+    ref: 'Daniel 2:5-6'
   },
   {
     cap: 2,
-    pregunta: '¿Cuál fue la exigencia del rey que los sabios consideraron imposible?',
-    opciones: [
-      'Decir primero el sueño y luego su interpretación',
-      'Construir una estatua de oro',
-      'Adorar al rey como dios',
-      'Traducir una escritura extraña'
-    ],
-    correcta: 0,
-    explicacion: 'El rey exigió que le dijeran el sueño mismo y su interpretación; los sabios dijeron que era cosa imposible (Daniel 2:5-11).',
-    ref: 'Daniel 2:5-11'
-  },
-  {
-    cap: 2,
-    pregunta: '¿Qué decreto emitió el rey al no poder los sabios revelar el sueño?',
-    opciones: [
-      'Que todos los sabios de Babilonia fueran muertos',
-      'Que los echara de la corte',
-      'Que los encarcelara de por vida',
-      'Que los desterrara'
-    ],
-    correcta: 0,
-    explicacion: 'El rey, airado, ordenó que fuesen destruidos todos los sabios de Babilonia (Daniel 2:12).',
-    ref: 'Daniel 2:12'
-  },
-  {
-    cap: 2,
-    pregunta: '¿Cómo se llamaba el capitán de la guardia del rey que ejecutaba el decreto?',
-    opciones: ['Arioc', 'Aspenaz', 'Belsasar', 'Darío'],
-    correcta: 0,
-    explicacion: 'Arioc, capitán de la guardia del rey, salió para matar a los sabios de Babilonia (Daniel 2:14).',
-    ref: 'Daniel 2:14'
-  },
-  {
-    cap: 2,
-    pregunta: '¿Qué hizo Daniel al enterarse del decreto de muerte?',
-    opciones: [
-      'Pidió sabiduría y tiempo al rey para mostrar la interpretación',
-      'Huyó de Babilonia',
-      'Se escondió con sus amigos',
-      'Se rindió sin luchar'
-    ],
-    correcta: 0,
-    explicacion: 'Daniel habló con prudencia y sabiduría a Arioc y al rey, pidiendo tiempo para revelar la interpretación (Daniel 2:14-16).',
-    ref: 'Daniel 2:14-16'
-  },
-  {
-    cap: 2,
-    pregunta: '¿Qué hizo Daniel junto con sus compañeros para conocer el misterio?',
-    opciones: [
-      'Pedir misericordia al Dios del cielo sobre este misterio',
-      'Estudiar libros antiguos',
-      'Consultar a otros magos',
-      'Esperar una señal del rey'
-    ],
-    correcta: 0,
-    explicacion: 'Daniel entró en su casa e hizo saber el asunto a sus amigos, para que pidieran misericordia del Dios del cielo (Daniel 2:17-18).',
-    ref: 'Daniel 2:17-18'
-  },
-  {
-    cap: 2,
-    pregunta: '¿Cómo se le reveló a Daniel el misterio del rey?',
-    opciones: [
-      'En visión de noche',
-      'Por medio de un ángel en el día',
-      'A través del rey mismo',
-      'En un pergamino antiguo'
-    ],
-    correcta: 0,
-    explicacion: 'Entonces el misterio fue revelado a Daniel en visión de noche; Daniel bendijo al Dios del cielo (Daniel 2:19).',
+    pregunta: '¿Quién reveló el sueño a Daniel?',
+    opciones: ['Un sacerdote', 'Gabriel', 'Dios', 'El rey'],
+    correcta: 2,
+    explicacion: 'El misterio fue revelado a Daniel por Dios en visión de noche.',
     ref: 'Daniel 2:19'
   },
   {
     cap: 2,
-    pregunta: 'En la estatua del sueño, ¿de qué metal era la cabeza?',
-    opciones: ['Oro fino', 'Plata', 'Bronce', 'Hierro'],
-    correcta: 0,
-    explicacion: 'La estatua tenía la cabeza de oro fino, que representaba al rey Nabucodonosor y su reino (Daniel 2:32, 38).',
-    ref: 'Daniel 2:32,38'
+    pregunta: '¿Qué representaba la cabeza de oro de la estatua?',
+    opciones: ['Grecia', 'Roma', 'Babilonia', 'Medo-Persia'],
+    correcta: 2,
+    explicacion: 'La cabeza de oro representaba a Nabucodonosor y el reino de Babilonia.',
+    ref: 'Daniel 2:37-38'
   },
   {
     cap: 2,
-    pregunta: 'En la estatua, ¿de qué eran el pecho y los brazos?',
-    opciones: ['Plata', 'Oro', 'Bronce', 'Hierro'],
-    correcta: 0,
-    explicacion: 'El pecho y los brazos de la estatua eran de plata, representando un reino inferior que seguiría (Daniel 2:32,39).',
+    pregunta: '¿Qué representaban el pecho y los brazos de plata?',
+    opciones: ['Grecia', 'Roma', 'Medo-Persia', 'Egipto'],
+    correcta: 2,
+    explicacion: 'Después de Babilonia vendría otro reino, identificado tradicionalmente como Medo-Persia.',
     ref: 'Daniel 2:32,39'
   },
   {
     cap: 2,
-    pregunta: 'En la estatua, ¿de qué eran el vientre y los muslos?',
-    opciones: ['Bronce', 'Hierro', 'Plata', 'Barro'],
+    pregunta: '¿Qué representaban el vientre y los muslos de bronce?',
+    opciones: ['Grecia', 'Roma', 'Babilonia', 'Medo-Persia'],
     correcta: 0,
-    explicacion: 'El vientre y los muslos de bronce representaban un tercer reino que dominaría toda la tierra (Daniel 2:32,39).',
+    explicacion: 'El bronce representa el tercer reino, identificado tradicionalmente como Grecia.',
     ref: 'Daniel 2:32,39'
   },
   {
     cap: 2,
-    pregunta: 'En la estatua, ¿de qué eran las piernas y los pies?',
-    opciones: [
-      'Piernas de hierro y pies en parte de hierro y en parte de barro cocido',
-      'Piernas de oro y pies de barro',
-      'Piernas de bronce y pies de plata',
-      'Piernas de plata y pies de hierro'
-    ],
-    correcta: 0,
-    explicacion: 'Las piernas de hierro y los pies en parte de hierro y en parte de barro: un cuarto reino fuerte y luego dividido (Daniel 2:33,40-43).',
-    ref: 'Daniel 2:33,40-43'
+    pregunta: '¿Qué representaban las piernas de hierro?',
+    opciones: ['Grecia', 'Egipto', 'Roma', 'Medo-Persia'],
+    correcta: 2,
+    explicacion: 'El hierro representa el cuarto reino fuerte, identificado tradicionalmente como Roma.',
+    ref: 'Daniel 2:33,40'
   },
   {
     cap: 2,
-    pregunta: '¿Qué le golpeó a la estatua y la desmenuzó por completo?',
-    opciones: [
-      'Una piedra cortada, no con mano, que golpeó los pies',
-      'Un gran viento',
-      'Un fuego del cielo',
-      'Un ejército de ángeles'
-    ],
-    correcta: 0,
-    explicacion: 'Una piedra fue cortada, no con mano, e hirió a la estatua en los pies y la desmenuzó toda (Daniel 2:34).',
-    ref: 'Daniel 2:34'
+    pregunta: '¿Qué representaban los pies de hierro y barro?',
+    opciones: ['Un reino unido', 'Reinos divididos', 'Babilonia', 'El Reino de Dios'],
+    correcta: 1,
+    explicacion: 'Los pies mezclados de hierro y barro representan un reino dividido.',
+    ref: 'Daniel 2:41-43'
   },
   {
     cap: 2,
-    pregunta: 'Según Daniel, ¿qué representa la piedra (el reino que no será dejado a otro pueblo)?',
-    opciones: [
-      'El reino eterno de Dios, que permanecerá para siempre',
-      'Un nuevo imperio humano más poderoso',
-      'El retorno de Israel a su tierra',
-      'Una nueva Babilonia'
-    ],
-    correcta: 0,
-    explicacion: 'El Dios del cielo levantará un reino que no será jamás destruido y permanecerá para siempre (Daniel 2:44).',
-    ref: 'Daniel 2:44'
+    pregunta: '¿Qué representaba la piedra que destruyó la estatua?',
+    opciones: ['Jerusalén', 'Israel', 'El Reino eterno de Dios', 'Babilonia'],
+    correcta: 2,
+    explicacion: 'La piedra representa el reino de Dios, que no será jamás destruido.',
+    ref: 'Daniel 2:44-45'
   },
   {
-    cap: 2,
-    pregunta: '¿Cómo recompensó el rey a Daniel tras revelar e interpretar el sueño?',
-    opciones: [
-      'Lo hizo gobernador de Babilonia y jefe de los sabios; y promocionó a sus amigos',
-      'Lo envió de vuelta a Judá',
-      'Le dio oro y plata solamente',
-      'No le dio nada'
-    ],
+    cap: 3,
+    pregunta: '¿Por qué fueron lanzados al horno de fuego Sadrac, Mesac y Abed-nego?',
+    opciones: ['Porque desobedecieron al rey', 'Porque no adoraron la estatua', 'Porque escaparon', 'Porque mintieron'],
+    correcta: 1,
+    explicacion: 'Fueron acusados porque no adoraron la estatua de oro levantada por Nabucodonosor.',
+    ref: 'Daniel 3:12'
+  },
+  {
+    cap: 3,
+    pregunta: '¿Cuántas personas vio el rey caminando dentro del horno?',
+    opciones: ['Tres', 'Cuatro', 'Cinco', 'Seis'],
+    correcta: 1,
+    explicacion: 'El rey vio cuatro varones sueltos caminando en medio del fuego.',
+    ref: 'Daniel 3:24-25'
+  },
+  {
+    cap: 4,
+    pregunta: '¿Qué sueño tuvo Nabucodonosor en Daniel 4?',
+    opciones: ['Un río', 'Un ejército', 'Un gran árbol', 'Un león'],
+    correcta: 2,
+    explicacion: 'Nabucodonosor soñó con un árbol grande que llegaba hasta el cielo.',
+    ref: 'Daniel 4:10-12'
+  },
+  {
+    cap: 4,
+    pregunta: '¿Cuál fue el pecado principal de Nabucodonosor?',
+    opciones: ['Mentira', 'Orgullo', 'Robo', 'Idolatría'],
+    correcta: 1,
+    explicacion: 'El rey fue humillado por su orgullo hasta reconocer que el Altísimo gobierna.',
+    ref: 'Daniel 4:30-37'
+  },
+  {
+    cap: 5,
+    pregunta: '¿Quién era el rey cuando apareció la escritura en la pared?',
+    opciones: ['Darío', 'Ciro', 'Nabucodonosor', 'Belsasar'],
+    correcta: 3,
+    explicacion: 'La escritura apareció durante el banquete del rey Belsasar.',
+    ref: 'Daniel 5:1-5'
+  },
+  {
+    cap: 5,
+    pregunta: '¿Qué significaba la palabra “TEKEL”?',
+    opciones: ['Dividido', 'Pesado y hallado falto', 'Contado', 'Bendecido'],
+    correcta: 1,
+    explicacion: 'TEKEL significa que el rey fue pesado en balanza y fue hallado falto.',
+    ref: 'Daniel 5:27'
+  },
+  {
+    cap: 6,
+    pregunta: '¿Por qué fue Daniel lanzado al foso de los leones?',
+    opciones: ['Porque se negó a obedecer a Dios', 'Porque oraba a Dios', 'Porque mintió', 'Porque robó'],
+    correcta: 1,
+    explicacion: 'Daniel siguió orando a Dios aunque el decreto del rey lo prohibía.',
+    ref: 'Daniel 6:10-16'
+  },
+  {
+    cap: 6,
+    pregunta: '¿Qué hizo Dios por Daniel en el foso?',
+    opciones: ['Lo sacó inmediatamente', 'Destruyó a los leones', 'Envió un ángel para cerrar la boca de los leones', 'Lo hizo invisible'],
+    correcta: 2,
+    explicacion: 'Dios envió su ángel y cerró la boca de los leones.',
+    ref: 'Daniel 6:22'
+  },
+  {
+    cap: 7,
+    pregunta: 'En la visión de Daniel 7, las cuatro bestias representan:',
+    opciones: ['Cuatro montañas', 'Cuatro profetas', 'Cuatro reinos', 'Cuatro ciudades'],
+    correcta: 2,
+    explicacion: 'Las cuatro grandes bestias representan cuatro reyes o reinos que se levantarían en la tierra.',
+    ref: 'Daniel 7:17'
+  },
+  {
+    cap: 8,
+    pregunta: '¿Qué animal representaba al Imperio Medo-Persa en Daniel 8?',
+    opciones: ['Un león', 'Un carnero', 'Un oso', 'Un águila'],
+    correcta: 1,
+    explicacion: 'El carnero con dos cuernos representa a los reyes de Media y de Persia.',
+    ref: 'Daniel 8:20'
+  },
+  {
+    cap: 8,
+    pregunta: '¿Qué animal representaba al Imperio Griego?',
+    opciones: ['Un carnero', 'Un león', 'Un macho cabrío', 'Un oso'],
+    correcta: 2,
+    explicacion: 'El macho cabrío representa al rey de Grecia.',
+    ref: 'Daniel 8:21'
+  },
+  {
+    cap: 8,
+    pregunta: '¿Qué ángel explicó la visión a Daniel?',
+    opciones: ['Miguel', 'Gabriel', 'Rafael', 'Uriel'],
+    correcta: 1,
+    explicacion: 'Gabriel recibió la orden de hacer entender la visión a Daniel.',
+    ref: 'Daniel 8:16'
+  },
+  {
+    cap: 9,
+    pregunta: '¿Cuántas semanas fueron determinadas sobre el pueblo de Dios?',
+    opciones: ['40', '12', '70', '100'],
+    correcta: 2,
+    explicacion: 'Setenta semanas fueron determinadas sobre el pueblo y la santa ciudad.',
+    ref: 'Daniel 9:24'
+  },
+  {
+    cap: 10,
+    pregunta: '¿Cuántos días ayunó Daniel en el capítulo 10?',
+    opciones: ['7', '10', '21', '40'],
+    correcta: 2,
+    explicacion: 'Daniel estuvo afligido durante tres semanas completas.',
+    ref: 'Daniel 10:2-3'
+  },
+  {
+    cap: 10,
+    pregunta: '¿Quién vino a ayudar al ángel que hablaba con Daniel?',
+    opciones: ['Gabriel', 'Elías', 'Miguel', 'Moisés'],
+    correcta: 2,
+    explicacion: 'Miguel, uno de los principales príncipes, vino para ayudar.',
+    ref: 'Daniel 10:13'
+  },
+  {
+    cap: 12,
+    pregunta: '¿Quién es llamado “el gran príncipe que está de parte de tu pueblo”?',
+    opciones: ['Gabriel', 'Miguel', 'Darío', 'Ciro'],
+    correcta: 1,
+    explicacion: 'Miguel es llamado el gran príncipe que está de parte del pueblo de Daniel.',
+    ref: 'Daniel 12:1'
+  },
+  {
+    cap: 12,
+    pregunta: '¿Qué se le ordenó a Daniel hacer con las palabras de la profecía?',
+    opciones: ['Destruirlas', 'Publicarlas', 'Sellarlas hasta el tiempo del fin', 'Escribirlas en piedra'],
+    correcta: 2,
+    explicacion: 'Daniel recibió la orden de cerrar las palabras y sellar el libro hasta el tiempo del fin.',
+    ref: 'Daniel 12:4'
+  },
+  {
+    cap: '1-12',
+    pregunta: '¿Cuál es el mensaje principal del libro de Daniel?',
+    opciones: ['La historia de Babilonia', 'La sabiduría humana', 'Dios gobierna sobre los reinos de la tierra y establecerá su reino eterno', 'La grandeza de los reyes'],
+    correcta: 2,
+    explicacion: 'El libro de Daniel muestra la soberanía de Dios sobre los reinos humanos y la esperanza de su reino eterno.',
+    ref: 'Daniel 2:44; 7:14'
+  },
+  {
+    cap: 3,
+    pregunta: '¿Qué respondió Sadrac, Mesac y Abed-nego cuando el rey les ordenó adorar la estatua de oro?',
+    opciones: ['Que obedecerían al rey', 'Que consultarían primero a Daniel', 'Que su Dios podía librarlos, pero aunque no lo hiciera, no adorarían la estatua', 'Que escaparían de Babilonia'],
+    correcta: 2,
+    explicacion: 'Ellos afirmaron que Dios podía librarlos, pero que aunque no lo hiciera, no servirían a los dioses del rey.',
+    ref: 'Daniel 3:16-18'
+  },
+  {
+    cap: 6,
+    pregunta: '¿Qué decreto emitió el rey Darío después de que Daniel fue librado del foso de los leones?',
+    opciones: ['Que nadie volviera a orar', 'Que todos adoraran la estatua de oro', 'Que todos temieran y reverenciaran al Dios de Daniel', 'Que Daniel fuera nombrado rey'],
+    correcta: 2,
+    explicacion: 'Darío decretó que en todo su dominio se temiera y reverenciara al Dios de Daniel.',
+    ref: 'Daniel 6:25-27'
+  },
+  {
+    cap: 7,
+    pregunta: 'En la profecía de Daniel, ¿a cuánto equivale la expresión “un tiempo, tiempos y la mitad de un tiempo”?',
+    opciones: ['1,260 días proféticos', '490 días proféticos', '2,300 días proféticos', '70 semanas'],
     correcta: 0,
-    explicacion: 'El rey engrandeció a Daniel, le dio muchos honores, lo hizo gobernador y jefe de los gobernadores; a petición suya, también a Sadrac, Mesac y Abed-nego (Daniel 2:48-49).',
-    ref: 'Daniel 2:48-49'
+    explicacion: 'La expresión se asocia con el periodo profético de 1,260 días.',
+    ref: 'Daniel 7:25; 12:7'
+  },
+  {
+    cap: 7,
+    pregunta: 'Según la profecía de Daniel, ¿qué significa la expresión “un tiempo, tiempos y la mitad de un tiempo”?',
+    opciones: ['Un año y medio', 'Tres años y medio', 'Siete años', 'Mil doscientos sesenta años literales'],
+    correcta: 1,
+    explicacion: 'Un tiempo, tiempos y la mitad de un tiempo equivale a tres tiempos y medio, tradicionalmente entendido como tres años y medio.',
+    ref: 'Daniel 7:25; 12:7'
   }
 ];
 
 // Versión "pública" del banco: sin `correcta` ni `explicacion`.
-// Es lo que el servidor envía al navegador para mostrar enunciados y opciones.
 function preguntasPublicas() {
   return PREGUNTAS.map(p => ({
     cap: p.cap,
