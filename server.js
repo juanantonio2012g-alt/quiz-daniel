@@ -50,19 +50,25 @@ function bonusVelocidad(tiempoRestante) {
 //  jugadores: { [socketId]: { id, nombre, esHost, indice, aciertos,
 //                             errores, puntaje, tiempoAcumulado,
 //                             respuestas:[bool|null], terminado,
-//                             ultimoCambio, token } }
+//                             ultimoCambio, sala } }
 //
-//  invitados: { [token]: { token, nombre, socketId|null, creado } }
-//    Registro de invitaciones que el anfitrión genera. Cada token
-//    preasigna un nombre; al entrar por ?token=... el participante
-//    no escribe nada.
+//  salaCompartida:
+//    Un solo enlace para todos los participantes. Cada persona entra,
+//    escribe su nombre y espera a que el anfitrión inicie la partida.
 // -------------------------------------------------------------------
 const jugadores = {};
-const invitados = {}; // token -> { token, nombre, socketId, creado }
 
 function nuevoToken() {
   return Math.random().toString(36).slice(2, 10); // 8 chars, suficientemente único
 }
+
+const salaCompartida = nuevoToken();
+const juego = {
+  estado: 'esperando', // esperando | cuenta | jugando
+  cuenta: 0,
+  inicio: null,
+  countdownId: null
+};
 
 // Ranking ordenado por: puntaje (desc) → quien respondió antes (asc).
 function calcularRanking() {
@@ -87,52 +93,108 @@ function calcularRanking() {
     });
 }
 
-// Lista pública de invitaciones (sin internos) para el panel del anfitrión.
-function listaInvitados() {
-  return Object.values(invitados)
-    .map(inv => ({
-      token: inv.token,
-      nombre: inv.nombre,
-      conectado: !!inv.socketId,
-      creado: inv.creado
-    }))
-    .sort((a, b) => a.creado - b.creado);
-}
-
 function emitirRanking() {
   io.emit('ranking-update', calcularRanking());
 }
 
-function emitirInvitados() {
-  io.emit('invitados-update', listaInvitados());
+function estadoPublico() {
+  return {
+    estado: juego.estado,
+    cuenta: juego.cuenta,
+    inicio: juego.inicio
+  };
+}
+
+function resetearJugadores() {
+  Object.values(jugadores).forEach(j => {
+    if (j.esHost) return;
+    j.indice = 0;
+    j.aciertos = 0;
+    j.errores = 0;
+    j.puntaje = 0;
+    j.tiempoAcumulado = 0;
+    j.respuestas = new Array(TOTAL_PREGUNTAS).fill(null);
+    j.terminado = false;
+    j.ultimoCambio = Date.now();
+  });
+}
+
+function emitirEstadoJuego() {
+  io.emit('game:state', estadoPublico());
+}
+
+function iniciarCuentaRegresiva() {
+  if (juego.estado === 'cuenta' || juego.estado === 'jugando') return false;
+  resetearJugadores();
+  juego.estado = 'cuenta';
+  juego.cuenta = 3;
+  juego.inicio = null;
+  emitirRanking();
+  emitirEstadoJuego();
+  io.emit('game:countdown', { segundos: juego.cuenta });
+
+  juego.countdownId = setInterval(() => {
+    juego.cuenta -= 1;
+    if (juego.cuenta > 0) {
+      io.emit('game:countdown', { segundos: juego.cuenta });
+      emitirEstadoJuego();
+      return;
+    }
+
+    clearInterval(juego.countdownId);
+    juego.countdownId = null;
+    juego.estado = 'jugando';
+    juego.cuenta = 0;
+    juego.inicio = Date.now();
+    emitirEstadoJuego();
+    io.emit('game:start', { inicio: juego.inicio });
+  }, 1000);
+  return true;
+}
+
+function volverAEspera() {
+  if (juego.countdownId) clearInterval(juego.countdownId);
+  juego.countdownId = null;
+  juego.estado = 'esperando';
+  juego.cuenta = 0;
+  juego.inicio = null;
+  resetearJugadores();
+  emitirRanking();
+  emitirEstadoJuego();
+}
+
+function obtenerBaseUrl(socket) {
+  if (process.env.RENDER_EXTERNAL_URL) return process.env.RENDER_EXTERNAL_URL.replace(/\/$/, '');
+  const host = socket.handshake.headers.host;
+  if (host) {
+    const proto = socket.handshake.headers['x-forwarded-proto'] || 'http';
+    return `${proto}://${host}`;
+  }
+  return `http://${obtenerIPLocal()}:${PORT}`;
 }
 
 // -------------------------------------------------------------------
 //  Conexiones de clientes
 // -------------------------------------------------------------------
 io.on('connection', (socket) => {
-  // Nuevo jugador. payload: { nombre?, host?, token? }  (o string por compatibilidad)
+  // Nuevo jugador. payload: { nombre?, host?, sala? }  (o string por compatibilidad)
   //  - Si trae `host:true` → es el panel del anfitrión (no compite).
-  //  - Si trae `token`     → resolvemos el nombre preasignado en `invitados`.
-  //  - Si no                → usamos `nombre` (flujo clásico con escritura manual).
+  //  - Si trae `sala`      → debe coincidir con el enlace compartido.
+  //  - El participante escribe su nombre y espera el inicio del anfitrión.
   socket.on('join', (payload) => {
     const data = typeof payload === 'string' ? { nombre: payload } : (payload || {});
 
-    // Si llega con token, resolver invitación (no requiere escribir nombre)
-    let token = null;
-    let nombreResuelto = null;
-    if (data.token && !invitados[data.token]) {
-      socket.emit('invitacion-error', { mensaje: 'Esta invitación no existe o fue eliminada.' });
+    if (!data.host && data.sala && data.sala !== salaCompartida) {
+      socket.emit('sala-error', { mensaje: 'Este enlace de sala no existe o ya no es válido.' });
       return;
     }
-    if (data.token && invitados[data.token]) {
-      token = data.token;
-      nombreResuelto = invitados[token].nombre;
-      // Reconectar si la invitación ya tenía socket (ej. recarga de página)
+
+    if (!data.host && juego.estado === 'jugando') {
+      socket.emit('sala-error', { mensaje: 'El juego ya inició. Espera a la próxima ronda.' });
+      return;
     }
 
-    const limpio = nombreResuelto
-      || String(data.nombre || '').trim().slice(0, 24)
+    const limpio = String(data.nombre || '').trim().slice(0, 24)
       || 'Anónimo';
 
     jugadores[socket.id] = {
@@ -147,19 +209,8 @@ io.on('connection', (socket) => {
       respuestas: new Array(TOTAL_PREGUNTAS).fill(null),
       terminado: false,
       ultimoCambio: Date.now(),
-      token
+      sala: data.host ? null : salaCompartida
     };
-
-    // Vincular la invitación con el socket activo
-    if (token) {
-      // Si otro socket usaba el mismo token, liberarlo
-      const prevId = invitados[token].socketId;
-      if (prevId && prevId !== socket.id && jugadores[prevId]) {
-        delete jugadores[prevId];
-      }
-      invitados[token].socketId = socket.id;
-      emitirInvitados();
-    }
 
     // Enviamos preguntas (sin respuestas) + total + política pública + nombre confirmado.
     socket.emit('config', {
@@ -171,70 +222,52 @@ io.on('connection', (socket) => {
         tiempoPregunta: POLITICA.TIEMPO_PREGUNTA,
         posicionesGanadoras: POLITICA.POSICIONES_GANADORAS
       },
-      nombreConfirmado: nombreResuelto // el cliente sabe que entró por invitación
+      nombreConfirmado: limpio,
+      sala: salaCompartida,
+      juego: estadoPublico()
     });
     socket.emit('ranking-update', calcularRanking());
-    socket.emit('invitados-update', listaInvitados());
+    socket.emit('game:state', estadoPublico());
     emitirRanking(); // notificar al resto (incluido el host)
   });
 
-  // ---------- Eventos del anfitrión (gestión de invitaciones) ----------
+  // ---------- Eventos del anfitrión (sala compartida) ----------
 
   // El panel pide la URL base para construir enlaces (IP:puerto).
   socket.on('host:info', (cb) => {
     if (typeof cb === 'function') {
-      const ip = obtenerIPLocal();
-      cb({ baseUrl: `http://${ip}:${PORT}`, total: TOTAL_PREGUNTAS });
+      const baseUrl = obtenerBaseUrl(socket);
+      cb({
+        baseUrl,
+        joinUrl: `${baseUrl}/?sala=${salaCompartida}`,
+        sala: salaCompartida,
+        total: TOTAL_PREGUNTAS,
+        juego: estadoPublico()
+      });
     }
   });
 
-  // Crear UNA invitación. payload: { nombre }
-  socket.on('host:crear', (payload, cb) => {
-    const nombre = String((payload && payload.nombre) || '').trim().slice(0, 24) || 'Invitado';
-    const token = nuevoToken();
-    invitados[token] = { token, nombre, socketId: null, creado: Date.now() };
-    emitirInvitados();
-    if (typeof cb === 'function') cb({ ok: true, token, nombre });
-  });
-
-  // Crear VARIAS invitaciones de golpe. payload: { nombres: [..] }
-  socket.on('host:crear-lote', (payload, cb) => {
-    const nombres = (payload && Array.isArray(payload.nombres)) ? payload.nombres : [];
-    const creados = nombres.map(n => {
-      const nombre = String(n || '').trim().slice(0, 24) || 'Invitado';
-      const token = nuevoToken();
-      invitados[token] = { token, nombre, socketId: null, creado: Date.now() };
-      return { token, nombre };
-    });
-    emitirInvitados();
-    if (typeof cb === 'function') cb({ ok: true, creados });
-  });
-
-  // Eliminar una invitación (y desconectar a su jugador si estaba activo).
-  socket.on('host:eliminar', (payload) => {
-    const token = payload && payload.token;
-    if (token && invitados[token]) {
-      const sid = invitados[token].socketId;
-      if (sid && jugadores[sid]) delete jugadores[sid];
-      delete invitados[token];
-      emitirRanking();
-      emitirInvitados();
+  socket.on('host:iniciar-juego', (cb) => {
+    const participantes = calcularRanking().length;
+    if (!participantes) {
+      if (typeof cb === 'function') cb({ ok: false, mensaje: 'Aún no hay participantes en la sala.' });
+      return;
     }
+    const ok = iniciarCuentaRegresiva();
+    if (typeof cb === 'function') cb(ok ? { ok: true } : { ok: false, mensaje: 'El juego ya está en curso.' });
   });
 
   // Reiniciar la sesión: borra TODOS los puntajes y progreso, pero
-  // conserva la lista de invitaciones (para jugar otra ronda con los mismos).
+  // conserva a los participantes conectados en la sala de espera.
   socket.on('host:reiniciar-sesion', () => {
-    Object.keys(jugadores).forEach(sid => delete jugadores[sid]);
-    Object.values(invitados).forEach(inv => { inv.socketId = null; });
-    emitirRanking();
-    emitirInvitados();
+    volverAEspera();
   });
 
   // Cliente responde una pregunta. payload: { indice, opcion, tiempoRestante }
   socket.on('answer', (payload) => {
     const j = jugadores[socket.id];
     if (!j) return;
+    if (j.esHost || juego.estado !== 'jugando') return;
     const { indice, opcion, tiempoRestante } = payload || {};
     if (typeof indice !== 'number' || indice < 0 || indice >= TOTAL_PREGUNTAS) return;
     if (j.respuestas[indice] !== null) return; // ya respondida

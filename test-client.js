@@ -31,7 +31,9 @@ function bonusEsperado(tiempoRestante) {
 //   'todos-mal' → siempre incorrecta
 //   'mitad'     → acierta la primera mitad, falla la segunda
 function crearJugador(nombre, modo) {
-  return new Promise((resolve) => {
+  let readyResolve;
+  const ready = new Promise((resolve) => { readyResolve = resolve; });
+  const done = new Promise((resolve) => {
     const socket = io(URL, { transports: ['websocket'] });
     const estado = {
       conectado: false, recibioConfig: false, feedbacks: 0,
@@ -58,6 +60,10 @@ function crearJugador(nombre, modo) {
         estado.errores.push(`config.preguntas.length inválido`);
       const traeRespuesta = cfg.preguntas.some(p => 'correcta' in p || 'explicacion' in p);
       if (traeRespuesta) estado.errores.push('Preguntas públicas revelan la respuesta');
+      readyResolve();
+    });
+
+    socket.on('game:start', () => {
       const d = decision(0);
       socket.emit('answer', { indice: 0, opcion: d.opcion, tiempoRestante: d.tiempo });
     });
@@ -99,22 +105,36 @@ function crearJugador(nombre, modo) {
 
     socket.on('connect_error', () => {
       estado.errores.push('No se pudo conectar al servidor');
+      readyResolve();
       resolve({ nombre, modo, ...estado });
     });
   });
+  return { ready, done };
 }
 
 (async () => {
   console.log('Conectando jugadores de prueba...\n');
+  const host = io(URL, { transports: ['websocket'] });
+  await new Promise((resolve) => {
+    host.on('connect', () => {
+      host.emit('join', { nombre: 'Host de prueba', host: true });
+      resolve();
+    });
+  });
+
   // Orden de conexión intencional para probar desempate por velocidad:
   //   Perfecto y Lento aciertan los 30, pero Perfecto responde más rápido.
-  const resultados = await Promise.all([
+  const jugadores = [
     crearJugador('Perfecto', 'perfecto'),     // 30 aciertos, bonus 30 c/u
     crearJugador('Veloz', 'perfecto'),        // 30 aciertos, bonus 30 c/u (idéntico puntaje)
     crearJugador('Lento', 'lento'),           // 30 aciertos, bonus 2 c/u
     crearJugador('Novato', 'todos-mal'),      // 0 aciertos
     crearJugador('Estudiante', 'mitad'),      // 15 aciertos
-  ]);
+  ];
+  await Promise.all(jugadores.map(j => j.ready));
+  host.emit('host:iniciar-juego');
+  const resultados = await Promise.all(jugadores.map(j => j.done));
+  host.disconnect();
 
   const [perfecto, veloz, lento, novato, estudiante] = resultados;
   const imprimir = (j) => console.log(

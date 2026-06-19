@@ -79,33 +79,29 @@
 
   <main class="max-w-6xl mx-auto px-4 md:px-6 py-8">
 
-    <!-- INVITACIONES -->
+    <!-- SALA COMPARTIDA -->
     <section class="grid lg:grid-cols-5 gap-5 mb-8">
       <div class="lg:col-span-2 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="px-5 py-4 bg-navy-900 text-white">
-          <h2 class="font-display font-bold">Invitar participantes</h2>
-          <p id="url-base" class="text-white/50 text-xs mt-1 truncate">Preparando enlace...</p>
+          <h2 class="font-display font-bold">Enlace único</h2>
+          <p id="url-base" class="text-white/50 text-xs mt-1 truncate">Preparando sala...</p>
         </div>
         <div class="p-5 space-y-4">
-          <form id="form-invitar" class="flex gap-2">
-            <input id="input-invitado" type="text" maxlength="24" autocomplete="off"
-              placeholder="Nombre del participante"
-              class="min-w-0 flex-1 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:ring-4 ring-orangeb/20 focus:border-orangeb text-sm" />
-            <button type="submit"
-              class="shrink-0 bg-orangeb hover:bg-orangeb-light text-white font-display font-bold px-4 py-2.5 rounded-xl transition">
-              Crear
-            </button>
-          </form>
-
-          <div>
-            <label for="input-lote" class="block text-xs font-semibold text-gray-500 mb-2">Crear varios</label>
-            <textarea id="input-lote" rows="4"
-              placeholder="Un nombre por línea"
-              class="w-full px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:ring-4 ring-violetb/20 focus:border-violetb text-sm resize-none"></textarea>
-            <button id="btn-crear-lote"
-              class="mt-2 w-full bg-navy-900 hover:bg-navy-700 text-white font-display font-bold py-2.5 rounded-xl transition">
-              Crear invitaciones en lote
-            </button>
+          <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4">
+            <p class="text-xs font-semibold text-gray-500 mb-2">Comparte este link con todos</p>
+            <p id="link-sala" class="text-sm font-semibold text-navy-900 break-all">Preparando enlace...</p>
+          </div>
+          <button id="btn-copiar-sala"
+            class="w-full bg-orangeb hover:bg-orangeb-light text-white font-display font-bold py-3 rounded-xl transition">
+            Copiar link
+          </button>
+          <button id="btn-iniciar-juego"
+            class="w-full bg-navy-900 hover:bg-navy-700 text-white font-display font-bold py-3 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+            Iniciar juego
+          </button>
+          <div id="estado-juego" class="rounded-2xl border border-gray-100 bg-white px-4 py-3">
+            <p class="text-xs text-gray-500">Estado</p>
+            <p id="estado-juego-texto" class="font-display font-bold text-navy-900">Esperando participantes</p>
           </div>
           <p id="msg-invitaciones" class="hidden text-xs rounded-xl px-3 py-2"></p>
         </div>
@@ -114,17 +110,24 @@
       <div class="lg:col-span-3 bg-white rounded-4xl border border-gray-100 shadow-sm overflow-hidden">
         <div class="px-5 py-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
           <div>
-            <h2 class="font-display font-bold text-navy-900">Enlaces generados</h2>
-            <p class="text-gray-500 text-xs">Copia un enlace y compártelo por mensaje.</p>
+            <h2 class="font-display font-bold text-navy-900">Participantes en sala</h2>
+            <p class="text-gray-500 text-xs">Cuando estén listos, inicia la cuenta atrás de 3 segundos.</p>
           </div>
           <span id="invitados-contador" class="text-xs font-semibold text-gray-500 bg-white border border-gray-100 rounded-full px-3 py-1">0</span>
         </div>
         <div id="invitados-lista" class="divide-y divide-gray-100 max-h-80 overflow-auto"></div>
         <div id="invitados-vacio" class="px-5 py-10 text-center text-sm text-gray-400">
-          Aún no hay invitaciones creadas.
+          Aún no hay participantes conectados.
         </div>
       </div>
     </section>
+
+    <div id="cuenta-panel" class="hidden fixed inset-0 z-50 bg-navy-900/90 text-white flex items-center justify-center text-center">
+      <div>
+        <p class="font-display font-bold text-xl text-white/70 mb-3">El juego empieza en</p>
+        <p id="cuenta-panel-numero" class="font-display font-extrabold text-8xl">3</p>
+      </div>
+    </div>
 
     <!-- POLÍTICA DE CALIFICACIÓN -->
     <details class="bg-white rounded-4xl border border-gray-100 shadow-sm mb-8 group">
@@ -182,27 +185,54 @@
     const socket = io();
     let TOTAL = 30;
     let baseUrl = window.location.origin;
+    let linkSala = window.location.origin;
+    let rankingActual = [];
 
     // Conectarse como host (no compite)
     socket.on('connect', () => {
       socket.emit('join', { nombre: 'Anfitrión', host: true });
       socket.emit('host:info', (info) => {
         if (info && info.baseUrl) baseUrl = info.baseUrl;
+        if (info && info.joinUrl) linkSala = info.joinUrl;
         if (info && info.total) TOTAL = info.total;
         $('url-base').textContent = baseUrl;
+        $('link-sala').textContent = linkSala;
+        if (info && info.juego) renderEstadoJuego(info.juego);
       });
+    });
+
+    socket.on('connect_error', () => {
+      if (window.location.protocol === 'file:') {
+        $('url-base').textContent = 'Abre esta página desde http://localhost:3000/host.html';
+        $('link-sala').textContent = 'El enlace se genera cuando entras por el servidor.';
+        mostrarMensaje('Abre el panel desde http://localhost:3000/host.html, no como archivo.', false);
+      }
     });
 
     socket.on('config', (cfg) => {
       if (cfg && cfg.total) TOTAL = cfg.total;
+      if (cfg && cfg.juego) renderEstadoJuego(cfg.juego);
     });
 
-    socket.on('ranking-update', (ranking) => render(ranking));
-    socket.on('invitados-update', (invitados) => renderInvitados(invitados || []));
+    socket.on('ranking-update', (ranking) => {
+      rankingActual = ranking || [];
+      render(rankingActual);
+      renderParticipantes(rankingActual);
+    });
+    socket.on('game:state', (state) => renderEstadoJuego(state));
+    socket.on('game:countdown', ({ segundos }) => {
+      $('cuenta-panel-numero').textContent = segundos;
+      $('cuenta-panel').classList.remove('hidden');
+      renderEstadoJuego({ estado: 'cuenta', cuenta: segundos });
+    });
+    socket.on('game:start', () => {
+      $('cuenta-panel').classList.add('hidden');
+      renderEstadoJuego({ estado: 'jugando' });
+      mostrarMensaje('Juego iniciado.');
+    });
 
     const $ = (id) => document.getElementById(id);
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function linkInvitado(token){ return `${baseUrl}/?token=${encodeURIComponent(token)}`; }
     function mostrarMensaje(texto, ok = true) {
       const msg = $('msg-invitaciones');
       msg.textContent = texto;
@@ -211,38 +241,16 @@
       setTimeout(() => msg.classList.add('hidden'), 2600);
     }
 
-    $('form-invitar').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const input = $('input-invitado');
-      const nombre = input.value.trim();
-      if (nombre.length < 2) {
-        mostrarMensaje('Escribe un nombre de al menos 2 letras.', false);
-        return;
-      }
-      socket.emit('host:crear', { nombre }, (res) => {
-        if (res && res.ok) {
-          input.value = '';
-          mostrarMensaje(`Invitación creada para ${res.nombre}.`);
-        }
-      });
-    });
+    $('btn-copiar-sala').addEventListener('click', () => copiarTexto(linkSala));
 
-    $('btn-crear-lote').addEventListener('click', () => {
-      const nombres = $('input-lote').value.split('\n').map(n => n.trim()).filter(Boolean);
-      if (!nombres.length) {
-        mostrarMensaje('Pega uno o más nombres, uno por línea.', false);
-        return;
-      }
-      socket.emit('host:crear-lote', { nombres }, (res) => {
-        if (res && res.ok) {
-          $('input-lote').value = '';
-          mostrarMensaje(`${res.creados.length} invitaciones creadas.`);
-        }
+    $('btn-iniciar-juego').addEventListener('click', () => {
+      socket.emit('host:iniciar-juego', (res) => {
+        if (!res || !res.ok) mostrarMensaje((res && res.mensaje) || 'No se pudo iniciar el juego.', false);
       });
     });
 
     $('btn-reiniciar').addEventListener('click', () => {
-      const ok = window.confirm('¿Reiniciar puntajes y progreso de todos? Las invitaciones se conservan.');
+      const ok = window.confirm('¿Reiniciar puntajes y regresar a todos a la sala de espera?');
       if (ok) socket.emit('host:reiniciar-sesion');
     });
 
@@ -255,34 +263,43 @@
       }
     }
 
-    function renderInvitados(invitados) {
-      $('invitados-contador').textContent = invitados.length + (invitados.length === 1 ? ' invitación' : ' invitaciones');
-      $('invitados-vacio').classList.toggle('hidden', invitados.length > 0);
+    function renderEstadoJuego(state) {
+      if (!state) return;
+      const btn = $('btn-iniciar-juego');
+      btn.disabled = state.estado === 'cuenta' || state.estado === 'jugando';
+      $('cuenta-panel').classList.toggle('hidden', state.estado !== 'cuenta');
+      if (state.estado === 'cuenta') {
+        $('estado-juego-texto').textContent = `Iniciando en ${state.cuenta || 3}...`;
+        $('cuenta-panel-numero').textContent = state.cuenta || 3;
+      } else if (state.estado === 'jugando') {
+        $('estado-juego-texto').textContent = 'Juego en curso';
+      } else {
+        $('estado-juego-texto').textContent = 'Esperando participantes';
+      }
+    }
+
+    function renderParticipantes(participantes) {
+      $('invitados-contador').textContent = participantes.length + (participantes.length === 1 ? ' participante' : ' participantes');
+      $('invitados-vacio').classList.toggle('hidden', participantes.length > 0);
       const lista = $('invitados-lista');
       lista.innerHTML = '';
-      invitados.forEach(inv => {
-        const url = linkInvitado(inv.token);
+      participantes.forEach(j => {
         const fila = document.createElement('div');
-        fila.className = 'px-5 py-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center';
+        fila.className = 'px-5 py-4 flex items-center justify-between gap-3';
         fila.innerHTML = `
           <div class="min-w-0">
             <div class="flex items-center gap-2">
-              <p class="font-semibold text-navy-900 truncate">${escapeHtml(inv.nombre)}</p>
-              ${inv.conectado
-                ? '<span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">conectado</span>'
-                : '<span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-1 rounded-full font-semibold">pendiente</span>'}
+              <p class="font-semibold text-navy-900 truncate">${escapeHtml(j.nombre)}</p>
+              ${j.respondidas > 0 || j.terminado
+                ? '<span class="text-[10px] bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-semibold">jugando</span>'
+                : '<span class="text-[10px] bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">en sala</span>'}
             </div>
-            <p class="text-xs text-gray-400 truncate mt-1">${escapeHtml(url)}</p>
+            <p class="text-xs text-gray-400 truncate mt-1">${j.respondidas}/${TOTAL} respondidas · ${j.aciertos} aciertos</p>
           </div>
-          <div class="flex gap-2">
-            <button data-copy="${escapeHtml(url)}" class="btn-copy bg-orangeb hover:bg-orangeb-light text-white text-xs font-bold px-3 py-2 rounded-xl transition">Copiar</button>
-            <button data-token="${escapeHtml(inv.token)}" class="btn-delete bg-white border border-gray-200 hover:border-red-300 text-gray-600 hover:text-red-600 text-xs font-bold px-3 py-2 rounded-xl transition">Eliminar</button>
-          </div>
+          <span class="font-display font-bold text-navy-900">${(j.puntaje || 0).toLocaleString()}</span>
         `;
         lista.appendChild(fila);
       });
-      lista.querySelectorAll('.btn-copy').forEach(btn => btn.addEventListener('click', () => copiarTexto(btn.dataset.copy)));
-      lista.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', () => socket.emit('host:eliminar', { token: btn.dataset.token })));
     }
 
     function render(ranking) {
