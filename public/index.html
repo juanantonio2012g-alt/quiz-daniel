@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Daniel · Capítulos 1 y 2</title>
+  <meta name="description" content="Quiz interactivo en tiempo real sobre el libro de Daniel, capítulos 1 y 2." />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Socket.IO (servido por el backend) -->
+  <script src="/socket.io/socket.io.js"></script>
+  <!-- Fuentes -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            navy: { DEFAULT: '#0A1F44', 50: '#E8ECF3', 700: '#152B53', 900: '#0A1F44' },
+            violetb: { DEFAULT: '#7C3AED', light: '#A78BFA' },
+            orangeb: { DEFAULT: '#F97316', light: '#FB923C' },
+            cream: '#F8FAFC',
+          },
+          fontFamily: { display: ['"Plus Jakarta Sans"', 'sans-serif'], body: ['Inter', 'sans-serif'] },
+          borderRadius: { '4xl': '24px' },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .gradient-brand { background: linear-gradient(135deg, #0A1F44 0%, #7C3AED 100%); }
+    .gradient-text {
+      background: linear-gradient(90deg, #F97316, #A78BFA, #F97316);
+      background-size: 200% auto;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: shimmer 4s linear infinite;
+    }
+    @keyframes shimmer { to { background-position: 200% center; } }
+    .blob { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.45; z-index: 0; animation: blob-float 18s ease-in-out infinite; }
+    @keyframes blob-float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      33% { transform: translate(40px,-30px) scale(1.1); }
+      66% { transform: translate(-30px,20px) scale(0.95); }
+    }
+    .grid-bg {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .fade-in { animation: fadeIn 0.45s ease-out both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .opcion { transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, border-color 0.2s ease; }
+    .opcion:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 10px 24px -10px rgba(124,58,237,0.45); }
+    .opcion:disabled { cursor: not-allowed; }
+    .opcion.correcta { border-color: #22c55e !important; background: #22c55e15 !important; }
+    .opcion.incorrecta { border-color: #ef4444 !important; background: #ef444415 !important; }
+    .timer-bar { transition: width 1s linear; }
+    @keyframes pop { 0%{transform:scale(0.96);opacity:0} 60%{transform:scale(1.02)} 100%{transform:scale(1);opacity:1} }
+    .pop { animation: pop 0.4s ease-out both; }
+    .scroll-soft { scrollbar-width: thin; }
+  </style>
+</head>
+
+<body class="bg-cream text-gray-800 font-body antialiased min-h-screen">
+
+  <!-- ===================== PANTALLA: REGISTRO ===================== -->
+  <section id="pantalla-registro" class="relative min-h-screen gradient-brand text-white overflow-hidden grid-bg flex items-center">
+    <div class="blob bg-violetb w-96 h-96 -top-20 -right-20"></div>
+    <div class="blob bg-orangeb w-96 h-96 bottom-0 -left-20 opacity-30"></div>
+    <div class="relative z-10 w-full max-w-lg mx-auto px-6 text-center">
+      <span class="inline-flex items-center gap-2 bg-white/10 border border-white/15 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+        📖 Estudio Bíblico en vivo
+      </span>
+      <h1 class="font-display font-extrabold text-4xl md:text-5xl leading-tight mb-3">
+        Quiz <span class="gradient-text">Daniel</span>
+      </h1>
+      <p class="text-white/75 text-lg mb-8">Capítulos 1 y 2 · 30 preguntas · Ranking en tiempo real</p>
+
+      <form id="form-registro" class="bg-white/10 backdrop-blur-md border border-white/15 rounded-4xl p-6 md:p-8 text-left">
+        <label class="block text-sm font-medium text-white/80 mb-2">Tu nombre</label>
+        <input id="input-nombre" type="text" maxlength="24" autocomplete="off"
+          placeholder="Ej. María"
+          class="w-full px-4 py-3 rounded-xl bg-white/95 text-navy-900 placeholder-gray-400 font-medium outline-none focus:ring-4 ring-orangeb/40" />
+        <button type="submit"
+          class="mt-5 w-full bg-orangeb hover:bg-orangeb-light font-display font-bold text-white py-3.5 rounded-xl transition shadow-lg shadow-orangeb/30">
+          Empezar quiz →
+        </button>
+        <p class="text-center text-white/50 text-xs mt-4">Cada pregunta tiene 20 segundos. ¡Lee Daniel 1 y 2 antes!</p>
+      </form>
+      <div id="error-registro" class="hidden mt-4 bg-red-500/20 border border-red-400/40 text-red-100 text-sm rounded-xl px-4 py-2"></div>
+      <p class="mt-6 text-white/60 text-sm">
+        👑 ¿Eres el anfitrión? <a href="/host.html" class="text-orangeb-light font-semibold underline underline-offset-2">Abrir panel de control</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== PANTALLA: QUIZ ===================== -->
+  <section id="pantalla-quiz" class="hidden min-h-screen bg-cream">
+    <!-- Top bar -->
+    <div class="sticky top-0 z-20 bg-navy text-white shadow-lg">
+      <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-xs text-white/60">Jugador</p>
+          <p id="jugador-nombre" class="font-display font-bold truncate">—</p>
+        </div>
+        <div class="text-center">
+          <p class="text-xs text-white/60">Pregunta</p>
+          <p class="font-display font-bold"><span id="q-actual">1</span>/<span id="q-total">30</span></p>
+        </div>
+        <div class="text-right">
+          <p class="text-xs text-white/60">Aciertos</p>
+          <p class="font-display font-bold text-orangeb-light">✓ <span id="q-aciertos">0</span></p>
+        </div>
+      </div>
+      <!-- Barra de progreso del quiz -->
+      <div class="h-1 bg-white/10">
+        <div id="barra-progreso" class="h-full bg-gradient-to-r from-orangeb to-violetb transition-all duration-500" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="max-w-3xl mx-auto px-4 py-8">
+      <!-- Timer -->
+      <div class="mb-5">
+        <div class="flex items-center justify-between text-xs font-semibold text-gray-500 mb-1">
+          <span>⏱ Tiempo restante</span>
+          <span id="timer-texto">20s</span>
+        </div>
+        <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+          <div id="timer-barra" class="timer-bar h-full bg-orangeb rounded-full" style="width:100%"></div>
+        </div>
+      </div>
+
+      <!-- Capítulo badge -->
+      <div class="mb-3">
+        <span id="cap-badge" class="inline-block text-xs font-semibold px-3 py-1 rounded-full bg-violetb/10 text-violetb">Daniel 1</span>
+      </div>
+
+      <!-- Pregunta -->
+      <h2 id="q-enunciado" class="font-display font-extrabold text-2xl md:text-3xl text-navy-900 leading-snug mb-6">—</h2>
+
+      <!-- Opciones -->
+      <div id="opciones" class="grid gap-3"></div>
+
+      <!-- Retroalimentación -->
+      <div id="feedback" class="hidden mt-6 fade-in">
+        <div id="feedback-caja" class="rounded-4xl p-5 border-2">
+          <div class="flex items-center gap-3 mb-2">
+            <span id="feedback-icono" class="text-2xl"></span>
+            <p id="feedback-titulo" class="font-display font-bold text-lg"></p>
+          </div>
+          <p id="feedback-bonus" class="hidden text-sm mb-2"></p>
+          <p id="feedback-texto" class="text-gray-600 leading-relaxed text-sm"></p>
+          <p id="feedback-ref" class="text-violetb font-semibold text-xs mt-2"></p>
+        </div>
+        <button id="btn-siguiente"
+          class="mt-5 w-full bg-navy-900 hover:bg-navy-700 text-white font-display font-bold py-3.5 rounded-xl transition">
+          Siguiente pregunta →
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PANTALLA: RESULTADOS + RANKING ===================== -->
+  <section id="pantalla-resultado" class="hidden min-h-screen bg-cream">
+    <div class="max-w-3xl mx-auto px-4 py-10">
+      <!-- Resumen personal -->
+      <div class="text-center mb-10 fade-in">
+        <p class="text-violetb font-semibold uppercase tracking-wider text-sm mb-2">¡Terminaste!</p>
+        <h1 class="font-display font-extrabold text-3xl md:text-4xl text-navy-900 mb-4">
+          Tu calificación
+        </h1>
+        <div class="inline-flex items-center justify-center">
+          <div class="relative w-40 h-40">
+            <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="#E5E7EB" stroke-width="10" />
+              <circle id="ring" cx="60" cy="60" r="52" fill="none" stroke="url(#grad)" stroke-width="10"
+                stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="326.7" style="transition: stroke-dashoffset 1.2s ease;" />
+              <defs>
+                <linearGradient id="grad" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#F97316" />
+                  <stop offset="100%" stop-color="#7C3AED" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <span id="res-porcentaje" class="font-display font-extrabold text-4xl text-navy-900">0%</span>
+              <span id="res-fraccion" class="text-gray-500 text-sm">0/30</span>
+            </div>
+          </div>
+        </div>
+        <p id="res-mensaje" class="text-gray-600 mt-4"></p>
+        <div class="mt-3 inline-flex items-center gap-2 bg-white shadow-sm border border-gray-100 rounded-full px-5 py-2">
+          <span class="text-xs text-gray-500">Puntaje total</span>
+          <span id="res-puntaje" class="font-display font-extrabold text-xl gradient-text">0</span>
+          <span class="text-xs text-gray-400">pts</span>
+        </div>
+      </div>
+
+      <!-- Podio -->
+      <div class="mb-8">
+        <h2 class="font-display font-bold text-xl text-navy-900 text-center mb-5">🏆 Podio en vivo</h2>
+        <div id="podio" class="grid grid-cols-3 gap-3 items-end max-w-md mx-auto"></div>
+      </div>
+
+      <!-- Ranking completo -->
+      <div class="bg-white rounded-4xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-5 py-4 bg-navy-900 text-white flex items-center justify-between">
+          <h2 class="font-display font-bold">📊 Ranking de participantes</h2>
+          <span id="ranking-contador" class="text-white/60 text-sm">0 jugadores</span>
+        </div>
+        <div id="ranking-lista" class="divide-y divide-gray-100"></div>
+      </div>
+
+      <!-- Acciones -->
+      <div class="flex flex-col sm:flex-row gap-3 mt-6">
+        <button id="btn-repaso"
+          class="flex-1 bg-orangeb hover:bg-orangeb-light text-white font-display font-bold py-3.5 rounded-xl transition">
+          📝 Ver repaso de errores
+        </button>
+        <button id="btn-reiniciar"
+          class="flex-1 bg-white border-2 border-gray-200 hover:border-violetb text-navy-900 font-display font-bold py-3.5 rounded-xl transition">
+          🔄 Jugar de nuevo
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== PANTALLA: REPASO ===================== -->
+  <section id="pantalla-repaso" class="hidden min-h-screen bg-cream">
+    <div class="max-w-3xl mx-auto px-4 py-10">
+      <button id="btn-volver-resultado" class="text-violetb font-semibold text-sm mb-4 hover:underline">← Volver</button>
+      <h1 class="font-display font-extrabold text-3xl text-navy-900 mb-2">Repaso de errores</h1>
+      <p id="repaso-sub" class="text-gray-500 mb-6">—</p>
+      <div id="repaso-lista" class="space-y-4"></div>
+      <div id="repaso-vacio" class="hidden text-center py-12">
+        <p class="text-6xl mb-4">🎉</p>
+        <p class="font-display font-bold text-xl text-navy-900">¡Sin errores!</p>
+        <p class="text-gray-500">Respondiste todas correctamente.</p>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // =================================================================
+    //  Estado del cliente
+    // =================================================================
+    const socket = io();
+    let TOTAL = 30;            // se actualiza desde el servidor
+    let indiceActual = 0;      // índice de pregunta en curso
+    let aciertos = 0;
+    let errores = 0;
+    let preguntas = [];        // bank local (definido abajo)
+    let timerId = null;
+    let tiempoRestante = 20;
+    let respondida = false;    // evita doble respuesta en la pregunta actual
+
+    // =================================================================
+    //  Banco de preguntas: se recibe del servidor en el evento 'config'
+    //  (sin respuestas correctas). Así evitamos duplicar el contenido.
+    // =================================================================
+    preguntas = [];
+
+    // =================================================================
+    //  Utilidades de UI
+    // =================================================================
+    const $ = (id) => document.getElementById(id);
+    const pantallas = ['pantalla-registro','pantalla-quiz','pantalla-resultado','pantalla-repaso'];
+    function mostrar(pantalla) {
+      pantallas.forEach(p => $(p).classList.add('hidden'));
+      $(pantalla).classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // =================================================================
+    //  Registro
+    // =================================================================
+    let nombrePendiente = null; // guarda el nombre mientras llegan las preguntas
+
+    $('form-registro').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nombre = $('input-nombre').value.trim();
+      const err = $('error-registro');
+      if (nombre.length < 2) {
+        err.textContent = 'Por favor escribe un nombre válido (mínimo 2 letras).';
+        err.classList.remove('hidden');
+        return;
+      }
+      err.classList.add('hidden');
+      $('jugador-nombre').textContent = nombre;
+      nombrePendiente = nombre;
+      // Deshabilitamos el botón mientras llega la configuración
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = 'Cargando...';
+      socket.emit('join', nombre);
+    });
+
+    // =================================================================
+    //  Config / Ranking desde el servidor
+    // =================================================================
+    socket.on('config', (data) => {
+      TOTAL = data.total || TOTAL;
+      if (Array.isArray(data.preguntas) && data.preguntas.length) {
+        preguntas = data.preguntas;
+        TOTAL = preguntas.length;
+      }
+      $('q-total').textContent = TOTAL;
+      // Si el usuario ya envió su nombre, arrancamos el quiz ahora
+      if (nombrePendiente) {
+        const n = nombrePendiente;
+        nombrePendiente = null;
+        iniciarQuiz();
+      }
+    });
+
+    socket.on('ranking-update', (ranking) => {
+      renderRanking(ranking);
+    });
+
+    // =================================================================
+    //  Flujo del quiz
+    // =================================================================
+    function iniciarQuiz() {
+      indiceActual = 0; aciertos = 0; errores = 0;
+      $('q-aciertos').textContent = '0';
+      $('q-total').textContent = TOTAL;
+      mostrar('pantalla-quiz');
+      renderPregunta();
+    }
+
+    function renderPregunta() {
+      respondida = false;
+      $('feedback').classList.add('hidden');
+      const p = preguntas[indiceActual];
+      if (!p) { finalizar(); return; }
+
+      $('q-actual').textContent = indiceActual + 1;
+      $('barra-progreso').style.width = ((indiceActual) / TOTAL * 100) + '%';
+      $('cap-badge').textContent = 'Daniel ' + p.cap;
+      $('q-enunciado').textContent = p.pregunta;
+
+      const cont = $('opciones');
+      cont.innerHTML = '';
+      const letras = ['A','B','C','D'];
+      p.opciones.forEach((op, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'opcion text-left bg-white border-2 border-gray-200 rounded-2xl px-5 py-4 flex items-center gap-4 font-medium text-navy-900';
+        btn.innerHTML = `<span class="w-8 h-8 shrink-0 rounded-lg bg-violetb/10 text-violetb font-display font-bold flex items-center justify-center">${letras[i]}</span><span>${op}</span>`;
+        btn.addEventListener('click', () => responder(i, btn));
+        cont.appendChild(btn);
+      });
+
+      $('q-enunciado').classList.remove('pop'); void $('q-enunciado').offsetWidth; $('q-enunciado').classList.add('pop');
+      iniciarTimer();
+    }
+
+    function responder(opcionElegida, btnElegido) {
+      if (respondida) return;
+      respondida = true;
+      detenerTimer();
+
+      // Deshabilitar opciones y recordar la elegida
+      const botones = document.querySelectorAll('#opciones .opcion');
+      botones.forEach((b, i) => {
+        b.disabled = true;
+        if (i === opcionElegida) b.dataset.elegida = '1';
+      });
+
+      // Enviar al servidor con el tiempo restante (para el bonus de velocidad)
+      socket.emit('answer', { indice: indiceActual, opcion: opcionElegida, tiempoRestante });
+    }
+
+    // Feedback llega desde el servidor (fuente de verdad)
+    socket.on('feedback', (data) => {
+      const { indice, acierto, correcta, puntosGanados, bonusVelocidad: bonus, explicacion, ref } = data;
+      const botones = document.querySelectorAll('#opciones .opcion');
+      // Marcar la respuesta correcta en verde
+      botones[correcta]?.classList.add('correcta');
+      // Si falló, marcar además la opción que eligió en rojo
+      if (!acierto) {
+        botones.forEach(b => { if (b.dataset.elegida === '1') b.classList.add('incorrecta'); });
+      }
+
+      // Reflejar acierto/error en HUD
+      if (acierto) { aciertos++; } else { errores++; }
+      $('q-aciertos').textContent = aciertos;
+
+      // Caja de feedback
+      const caja = $('feedback-caja');
+      const icono = $('feedback-icono');
+      const titulo = $('feedback-titulo');
+      const bonusLinea = $('feedback-bonus'); // línea con puntos (puede no existir aún)
+      if (acierto) {
+        caja.className = 'rounded-4xl p-5 border-2 border-green-400 bg-green-50';
+        icono.textContent = '✅'; titulo.textContent = '¡Correcto!'; titulo.className = 'font-display font-bold text-lg text-green-700';
+        if (bonusLinea) {
+          bonusLinea.innerHTML = `<span class="text-green-700 font-semibold">+${puntosGanados.toLocaleString()} pts</span> <span class="text-green-500/70 text-xs">(incluye +${bonus} por rapidez ⚡)</span>`;
+          bonusLinea.classList.remove('hidden');
+        }
+      } else {
+        caja.className = 'rounded-4xl p-5 border-2 border-red-400 bg-red-50';
+        icono.textContent = '❌'; titulo.textContent = 'Respuesta incorrecta'; titulo.className = 'font-display font-bold text-lg text-red-700';
+        if (bonusLinea) bonusLinea.classList.add('hidden');
+      }
+      $('feedback-texto').textContent = explicacion;
+      $('feedback-ref').textContent = '📖 ' + ref;
+      $('feedback').classList.remove('hidden');
+      $('feedback').classList.remove('fade-in'); void $('feedback').offsetWidth; $('feedback').classList.add('fade-in');
+    });
+
+    $('btn-siguiente').addEventListener('click', () => {
+      indiceActual++;
+      if (indiceActual >= TOTAL) {
+        finalizar();
+      } else {
+        renderPregunta();
+      }
+    });
+
+    function finalizar() {
+      detenerTimer();
+      $('barra-progreso').style.width = '100%';
+      // Pedir repaso al servidor (él ya tiene las respuestas registradas)
+      socket.emit('solicitar-repaso');
+      mostrar('pantalla-resultado');
+    }
+
+    // =================================================================
+    //  Timer
+    // =================================================================
+    function iniciarTimer() {
+      tiempoRestante = 20;
+      $('timer-texto').textContent = tiempoRestante + 's';
+      $('timer-barra').style.width = '100%';
+      $('timer-barra').style.background = '#F97316';
+      detenerTimer();
+      timerId = setInterval(() => {
+        tiempoRestante--;
+        $('timer-texto').textContent = tiempoRestante + 's';
+        $('timer-barra').style.width = (tiempoRestante / 20 * 100) + '%';
+        if (tiempoRestante <= 5) $('timer-barra').style.background = '#ef4444';
+        if (tiempoRestante <= 0) {
+          detenerTimer();
+          if (!respondida) {
+            // Tiempo agotado: cuenta como incorrecta. Enviamos tiempoRestante=0.
+            respondida = true;
+            document.querySelectorAll('#opciones .opcion').forEach(b => b.disabled = true);
+            socket.emit('answer', { indice: indiceActual, opcion: -1, tiempoRestante: 0 });
+          }
+        }
+      }, 1000);
+    }
+    function detenerTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+
+    // =================================================================
+    //  Repaso
+    // =================================================================
+    socket.on('repaso', (data) => {
+      const { aciertos: a, errores: e, puntaje, total, lista } = data;
+      // Resumen personal en pantalla de resultado
+      const pct = Math.round(a / total * 100);
+      $('res-porcentaje').textContent = pct + '%';
+      $('res-fraccion').textContent = a + '/' + total;
+      $('res-puntaje').textContent = (puntaje || 0).toLocaleString();
+      const ring = $('ring');
+      const circ = 2 * Math.PI * 52; // 326.7
+      ring.style.strokeDasharray = circ;
+      ring.style.strokeDashoffset = circ - (circ * pct / 100);
+
+      let msg = '';
+      if (pct === 100) msg = '¡Perfecto! Dominas Daniel 1 y 2. 🙌';
+      else if (pct >= 80) msg = '¡Excelente! Conoces muy bien el texto. 👏';
+      else if (pct >= 60) msg = 'Bien hecho. Sigue estudiando los detalles. 💪';
+      else if (pct >= 40) msg = 'Vas por buen camino. Repasa los capítulos. 📖';
+      else msg = 'Es un comienzo. Te recomendamos releer Daniel 1 y 2. ✨';
+      $('res-mensaje').textContent = msg;
+
+      // Lista de repaso
+      const cont = $('repaso-lista');
+      cont.innerHTML = '';
+      $('repaso-sub').textContent = `Aciertos: ${a} · Errores: ${e}`;
+      if (lista.length === 0) {
+        $('repaso-vacio').classList.remove('hidden');
+        cont.classList.add('hidden');
+      } else {
+        $('repaso-vacio').classList.add('hidden');
+        cont.classList.remove('hidden');
+        const letras = ['A','B','C','D'];
+        lista.forEach(err => {
+          const div = document.createElement('div');
+          div.className = 'bg-white rounded-2xl border border-gray-100 shadow-sm p-5 fade-in';
+          div.innerHTML = `
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-violetb/10 text-violetb">Daniel ${err.cap}</span>
+              <span class="text-xs text-gray-400">Pregunta ${err.indice + 1}</span>
+            </div>
+            <p class="font-display font-bold text-navy-900 mb-3">${err.pregunta}</p>
+            <div class="space-y-2">
+              ${err.opciones.map((o,i)=>`
+                <div class="px-3 py-2 rounded-lg text-sm ${i===err.correcta?'bg-green-50 border border-green-300 text-green-800 font-semibold':'bg-gray-50 text-gray-600'}">
+                  ${letras[i]}. ${o} ${i===err.correcta?'✓':''}
+                </div>`).join('')}
+            </div>
+            <p class="text-violetb text-xs font-semibold mt-3">📖 ${err.ref}</p>
+          `;
+          cont.appendChild(div);
+        });
+      }
+    });
+
+    $('btn-repaso').addEventListener('click', () => mostrar('pantalla-repaso'));
+    $('btn-volver-resultado').addEventListener('click', () => mostrar('pantalla-resultado'));
+    $('btn-reiniciar').addEventListener('click', () => {
+      // Volver a registro y resetear el botón del formulario
+      mostrar('pantalla-registro');
+      const btn = $('form-registro').querySelector('button[type="submit"]');
+      btn.disabled = false;
+      btn.textContent = 'Empezar quiz →';
+      $('input-nombre').value = '';
+      $('input-nombre').focus();
+    });
+
+    // =================================================================
+    //  Render del ranking + podio
+    // =================================================================
+    function renderRanking(ranking) {
+      // Podio (top 3)
+      const podio = $('podio');
+      podio.innerHTML = '';
+      const orden = [1, 0, 2]; // visual: 2do, 1ro, 3ro
+      const alturas = { 0: 'h-28', 1: 'h-20', 2: 'h-16' };
+      const medallas = ['🥇','🥈','🥉'];
+      const colores = ['from-orangeb to-orangeb-light','from-violetb to-violetb-light','from-gray-400 to-gray-300'];
+      orden.forEach(pos => {
+        const j = ranking[pos];
+        const wrap = document.createElement('div');
+        wrap.className = 'flex flex-col items-center justify-end';
+        if (j) {
+          wrap.innerHTML = `
+            <p class="font-display font-bold text-navy-900 text-sm mb-1 truncate max-w-[7rem] text-center">${escapeHtml(j.nombre)}</p>
+            <p class="text-xs text-gray-500 mb-1">${(j.puntaje||0).toLocaleString()} pts</p>
+            <div class="w-full ${alturas[pos]} bg-gradient-to-b ${colores[pos]} rounded-t-xl flex items-center justify-center text-2xl shadow-md">${medallas[pos]}</div>
+          `;
+        } else {
+          wrap.innerHTML = `<div class="w-full ${alturas[pos]} bg-gray-100 rounded-t-xl flex items-center justify-center text-gray-300">—</div>`;
+        }
+        podio.appendChild(wrap);
+      });
+
+      // Lista completa
+      const lista = $('ranking-lista');
+      lista.innerHTML = '';
+      $('ranking-contador').textContent = ranking.length + (ranking.length === 1 ? ' jugador' : ' jugadores');
+      if (ranking.length === 0) {
+        lista.innerHTML = '<div class="px-5 py-6 text-center text-gray-400 text-sm">Aún no hay participantes</div>';
+        return;
+      }
+      ranking.forEach((j, i) => {
+        const pct = Math.round(j.aciertos / j.total * 100);
+        const esYo = j.nombre === $('jugador-nombre').textContent;
+        const fila = document.createElement('div');
+        fila.className = `px-5 py-3 flex items-center gap-3 ${esYo ? 'bg-orangeb/5' : ''}`;
+        fila.innerHTML = `
+          <span class="w-7 text-center font-display font-bold ${i<3?'text-orangeb':'text-gray-400'}">${i+1}</span>
+          <span class="flex-1 font-medium text-navy-900 truncate">${escapeHtml(j.nombre)}${esYo?' <span class="text-xs text-orangeb font-semibold">(tú)</span>':''}</span>
+          ${j.terminado ? '<span class="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full">✓</span>' : '<span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">jugando</span>'}
+          <span class="text-xs text-gray-500 hidden sm:inline">${j.aciertos}/${j.total}</span>
+          <span class="font-display font-bold text-navy-900 w-20 text-right">${(j.puntaje||0).toLocaleString()}</span>
+        `;
+        lista.appendChild(fila);
+      });
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+  </script>
+</body>
+</html>

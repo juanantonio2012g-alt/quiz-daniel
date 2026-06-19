@@ -1,0 +1,23 @@
+# Render Blueprint — despliega este quiz con un solo clic.
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Cómo usarlo:
+#   1. Sube este repositorio a GitHub.
+#   2. En Render → New → Blueprint → selecciona el repo.
+#   3. Render detecta este archivo y crea el servicio automáticamente.
+
+services:
+  - type: web
+    name: quiz-daniel
+    runtime: node
+    plan: free
+    region: oregon          # cámbialo a la región más cercana a tu grupo
+    branch: main
+    # Render inyecta PORT automáticamente; server.js ya lo lee con process.env.PORT.
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /      # verifica que la web responde 200
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
